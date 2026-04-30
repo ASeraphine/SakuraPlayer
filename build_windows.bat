@@ -1,5 +1,5 @@
 @echo off
-REM Sakura Player Windows App Builder
+REM Sakura Player Windows App Builder (using Launch4j)
 echo Building Sakura Player Windows Application...
 
 REM Store the base directory
@@ -9,25 +9,13 @@ REM Clean previous builds
 if exist dist rmdir /s /q dist
 if exist build rmdir /s /q build
 if exist input rmdir /s /q input
-if exist javafx-modules rmdir /s /q javafx-modules
 if exist SakuraPlayer.jar del SakuraPlayer.jar
 mkdir dist
 mkdir input
-mkdir javafx-modules
-
-REM Copy only the JavaFX module JARs (exclude JDK internal modules that cause hash conflicts)
-echo Preparing JavaFX module path...
-copy lib\javafx.base.jar javafx-modules\
-copy lib\javafx.controls.jar javafx-modules\
-copy lib\javafx.graphics.jar javafx-modules\
-copy lib\javafx.media.jar javafx-modules\
-copy lib\javafx.swing.jar javafx-modules\
-copy lib\javafx.fxml.jar javafx-modules\
-copy lib\javafx.web.jar javafx-modules\
 
 REM Compile Java sources
 echo Compiling source code...
-javac --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
+javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
 
 REM Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo Creating JAR file...
@@ -43,26 +31,57 @@ cd res
 jar uf "%BASE_DIR%\SakuraPlayer.jar" .
 cd "%BASE_DIR%"
 
-REM Copy the JAR and non-JavaFX dependency JARs into the input directory
-echo Preparing input directory for jpackage...
+REM Copy the JAR and all dependency JARs into the input directory
+echo Preparing input directory for Launch4j...
 copy SakuraPlayer.jar input\
 copy lib\jaudiotagger-3.0.1.jar input\
 copy lib\batik-all-1.19.jar input\
 copy lib\svg-salamander-1.1.5.3.jar input\
 copy lib\jlayer-1.0.1.jar input\
 copy lib\mp3agic-0.9.0.jar input\
+copy lib\javafx.base.jar input\
+copy lib\javafx.controls.jar input\
+copy lib\javafx.graphics.jar input\
+copy lib\javafx.media.jar input\
+copy lib\javafx.swing.jar input\
+copy lib\javafx.fxml.jar input\
+copy lib\javafx.web.jar input\
 
-REM Create .exe bundle with jpackage
-echo Creating Windows .exe bundle...
-jpackage --type exe --input "input" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%BASE_DIR%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "-Duser.dir=%APPDIR%" --module-path "%BASE_DIR%\javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%BASE_DIR%\dist"
+REM Create .exe with Launch4j
+echo Creating Windows .exe with Launch4j...
+echo.
+echo Make sure Launch4j is installed and launch4jc.exe is in your PATH.
+echo Download from: https://sourceforge.net/projects/launch4j/
+echo.
+launch4jc.exe launch4j.xml
+
+REM If launch4jc is not in PATH, try common install locations
+if not exist dist\SakuraPlayer.exe (
+  if exist "C:\Program Files\Launch4j\launch4jc.exe" (
+    "C:\Program Files\Launch4j\launch4jc.exe" launch4j.xml
+  ) else if exist "C:\Program Files (x86)\Launch4j\launch4jc.exe" (
+    "C:\Program Files (x86)\Launch4j\launch4jc.exe" launch4j.xml
+  ) else (
+    echo.
+    echo Launch4j not found! Please install it or add it to PATH.
+    echo Download: https://sourceforge.net/projects/launch4j/
+    echo.
+    echo The JAR file has been created at: SakuraPlayer.jar
+    echo You can run it manually with:
+    echo java --module-path "input" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar SakuraPlayer.jar
+  )
+)
 
 REM Cleanup
 if exist SakuraPlayer.jar del SakuraPlayer.jar
 if exist input rmdir /s /q input
-if exist javafx-modules rmdir /s /q javafx-modules
 
 echo.
 echo Build complete!
-echo Application created at: dist\SakuraPlayer.exe
+if exist dist\SakuraPlayer.exe (
+  echo Application created at: dist\SakuraPlayer.exe
+) else (
+  echo JAR file created at: SakuraPlayer.jar
+)
 echo.
 pause

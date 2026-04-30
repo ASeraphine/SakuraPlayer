@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>input\SakuraPlayer.jar</jar>
+  <outfile>dist\SakuraPlayer.exe</outfile>
+  <errTitle>SakuraPlayer</errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://adoptium.net/</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>res\icon.ico</icon>
+  <classPath>
+    <mainClass>App</mainClass>
+    <cp>lib\jaudiotagger-3.0.1.jar</cp>
+    <cp>lib\batik-all-1.19.jar</cp>
+    <cp>lib\svg-salamander-1.1.5.3.jar</cp>
+    <cp>lib\jlayer-1.0.1.jar</cp>
+    <cp>lib\mp3agic-0.9.0.jar</cp>
+  </classPath>
+  <jre>
+    <path></path>
+    <bundledJre64Bit>false</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion>23</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64</runtimeBits>
+    <initialHeapSize>256</initialHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
+    <jvmArgs>
+      <jvmArg>--module-path=lib</jvmArg>
+      <jvmArg>--add-modules=javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web</jvmArg>
+      <jvmArg>-Duser.dir=%EXEDIR%</jvmArg>
+    </jvmArgs>
+  </jre>
+  <versionInfo>
+    <fileVersion>1.0.0.0</fileVersion>
+    <txtFileVersion>SakuraPlayer 1.0</txtFileVersion>
+    <fileDescription>SakuraPlayer Music Player</fileDescription>
+    <copyright>2026</copyright>
+    <productVersion>1.0.0.0</productVersion>
+    <txtProductVersion>SakuraPlayer 1.0</txtProductVersion>
+    <productName>SakuraPlayer</productName>
+    <companyName>SakuraPlayer</companyName>
+    <internalName>SakuraPlayer</internalName>
+    <originalFilename>SakuraPlayer.exe</originalFilename>
+    <trademarks></trademarks>
+    <language>ENGLISH_US</language>
+  </versionInfo>
+</launch4jConfig>
