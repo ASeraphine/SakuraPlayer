@@ -102,32 +102,6 @@ jobs:
           name: SakuraPlayer-Release-Package
           path: release/SakuraPlayer/
       
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
-        with:
-          name: SakuraPlayer ${{ github.ref_name }}
-          body: |
-            ## SakuraPlayer ${{ github.ref_name }}
-            
-            ### 📦 Download
-            - **SakuraPlayer.zip** — Complete package with launcher scripts (recommended)
-            - **SakuraPlayer.jar** — Standalone JAR file only
-            
-            ### 🚀 How to run
-            
-            **Option 1 (Recommended):** Download `SakuraPlayer.zip`, extract it, and run:
-            - Windows: Double-click `SakuraPlayer.bat`
-            - macOS/Linux: Run `./SakuraPlayer.sh` in terminal
-            
-            **Option 2 (JAR only):** Download `SakuraPlayer.jar` and run:
-            ```bash
-            java --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar SakuraPlayer.jar
-            ```
-            
-            ### 📋 Requirements
-            - Java 23+ installed
-          files: |
-            SakuraPlayer.jar
-            SakuraPlayer.zip
-          generate_release_notes: true
+      # Note: Release creation is handled by build-release.yml workflow
+      # This workflow only builds and uploads artifacts
+
