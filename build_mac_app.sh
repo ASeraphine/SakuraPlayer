@@ -72,10 +72,17 @@ jpackage \
   --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web \
   --dest "$BASE_DIR/dist"
 
+# Fix macOS Gatekeeper: remove quarantine and ad-hoc sign the .app
+echo "     Fixing macOS Gatekeeper for the .app..."
+xattr -cr "dist/Sakura Player.app" 2>/dev/null
+codesign --force --deep --sign - "dist/Sakura Player.app" 2>/dev/null
+echo "     ✅ macOS Gatekeeper fix applied"
+
 # ============================================
 # Build Windows .exe with Launch4j
 # ============================================
 echo "[6/6] Creating Windows .exe with Launch4j..."
+
 
 # Prepare input directory for Launch4j (separate from jpackage input)
 rm -rf input
@@ -95,20 +102,41 @@ cp lib/javafx.swing.jar input/
 cp lib/javafx.fxml.jar input/
 cp lib/javafx.web.jar input/
 
-# Check if launch4j is installed
+# Check if launch4j is available (native binary or JAR)
+LAUNCH4J_JAR="$BASE_DIR/tools/launch4j/launch4j.jar"
+LAUNCH4J_EXTRACTED=false
+
 if command -v launch4j &> /dev/null; then
+  # Native launch4j binary (e.g., installed via brew on Intel Mac)
   launch4j launch4j.xml
   echo "  ✅ Windows .exe created at: dist/SakuraPlayer.exe"
 elif [ -f /usr/local/bin/launch4j ]; then
   /usr/local/bin/launch4j launch4j.xml
   echo "  ✅ Windows .exe created at: dist/SakuraPlayer.exe"
+elif [ -f "$LAUNCH4J_JAR" ]; then
+  # Launch4j JAR already downloaded
+  java -jar "$LAUNCH4J_JAR" launch4j.xml
+  echo "  ✅ Windows .exe created at: dist/SakuraPlayer.exe"
 else
-  echo "  ⚠️  Launch4j not found! Install it with: brew install launch4j"
-  echo "     Skipping Windows .exe build."
-  echo ""
-  echo "     To build the Windows .exe later, run:"
-  echo "     brew install launch4j && launch4j launch4j.xml"
+  echo "  ⚠️  Launch4j not found. Downloading it as a JAR (works on any architecture)..."
+  mkdir -p "$BASE_DIR/tools"
+  curl -L -o /tmp/launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50.zip/download"
+  unzip -q /tmp/launch4j.zip -d "$BASE_DIR/tools/"
+  rm /tmp/launch4j.zip
+  LAUNCH4J_EXTRACTED=true
+  
+  # Find the launch4j.jar
+  LAUNCH4J_JAR=$(find "$BASE_DIR/tools" -name "launch4j.jar" -type f | head -1)
+  
+  if [ -f "$LAUNCH4J_JAR" ]; then
+    java -jar "$LAUNCH4J_JAR" launch4j.xml
+    echo "  ✅ Windows .exe created at: dist/SakuraPlayer.exe"
+  else
+    echo "  ❌ Failed to find launch4j.jar after extraction."
+    echo "     You can manually download it from: https://sourceforge.net/projects/launch4j/"
+  fi
 fi
+
 
 # Cleanup
 rm SakuraPlayer.jar
