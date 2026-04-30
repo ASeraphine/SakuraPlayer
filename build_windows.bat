@@ -18,39 +18,29 @@ cd bin
 jar cvfe ..\SakuraPlayer.jar App *
 cd ..
 
-REM Bundle resources and libraries into the JAR
-echo Bundling resources and libraries...
+REM Bundle resources into the JAR
+echo Bundling resources...
 cd res
 jar uf ..\SakuraPlayer.jar .
 cd ..
+
+REM Bundle only .jar libraries (skip .dylib files)
+echo Bundling libraries...
 cd lib
-jar uf ..\SakuraPlayer.jar .
+for %%f in (*.jar) do (
+    jar uf ..\SakuraPlayer.jar %%f
+)
 cd ..
 
 REM Create .exe bundle with jpackage
 echo Creating Windows .exe bundle...
-jpackage ^
-  --type exe ^
-  --input "%CD%" ^
-  --main-jar SakuraPlayer.jar ^
-  --main-class App ^
-  --name "Sakura Player" ^
-  --icon "%CD%\res\icon.ico" ^
-  --app-version 1.0 ^
-  --vendor "Sakura Player" ^
-  --copyright "Copyright 2026" ^
-  --win-dir-chooser ^
-  --win-menu ^
-  --win-shortcut ^
-  --java-options "--enable-native-access=ALL-UNNAMED" ^
-  --java-options "-Duser.dir=%APPDIR%" ^
-  --dest "%CD%\dist"
+jpackage --type exe --input "%CD%" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%CD%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%APPDIR%" --dest "%CD%\dist"
 
 REM Cleanup
 if exist SakuraPlayer.jar del SakuraPlayer.jar
 
 echo.
 echo Build complete!
-echo Application created at: dist\Sakura Player.exe
+echo Application created at: dist\SakuraPlayer.exe
 echo.
 pause
