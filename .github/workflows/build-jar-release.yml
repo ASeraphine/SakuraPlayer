@@ -1,0 +1,69 @@
+name: Build and Release JAR
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0, v2.0, etc.
+  workflow_dispatch:  # Also allow manual trigger
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0)'
+        required: false
+        default: '1.0'
+
+jobs:
+  build-jar:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+      
+      - name: Build JAR
+        run: |
+          # Compile Java sources
+          javac -cp "lib/*:src" src/*.java -d bin
+          
+          # Create executable JAR
+          cd bin
+          jar cvfe ../SakuraPlayer.jar App *
+          cd ..
+          
+          # Bundle resources into the JAR
+          cd res
+          jar uf ../SakuraPlayer.jar .
+          cd ..
+          
+          # Bundle libraries into the JAR
+          cd lib
+          jar uf ../SakuraPlayer.jar .
+          cd ..
+      
+      - name: Upload JAR as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SakuraPlayer.jar
+          path: SakuraPlayer.jar
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: SakuraPlayer ${{ github.ref_name }}
+          body: |
+            ## SakuraPlayer ${{ github.ref_name }}
+            
+            Download the JAR file below to run SakuraPlayer on any platform with Java 23+ installed.
+            
+            ### How to run:
+            ```bash
+            java -jar SakuraPlayer.jar
+            ```
+          files: SakuraPlayer.jar
+          generate_release_notes: true
