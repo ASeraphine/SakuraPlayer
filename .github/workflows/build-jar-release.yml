@@ -3,8 +3,8 @@ name: Build and Release JAR
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v1.0, v2.0, etc.
-  workflow_dispatch:  # Also allow manual trigger
+      - 'v*'
+  workflow_dispatch:
     inputs:
       version:
         description: 'Release version (e.g., 1.0)'
@@ -30,7 +30,7 @@ jobs:
           # Compile Java sources
           javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
           
-          # Create executable JAR
+          # Create executable JAR with Main-Class manifest
           cd bin
           jar cvfe ../SakuraPlayer.jar App *
           cd ..
@@ -40,8 +40,7 @@ jobs:
           jar uf ../SakuraPlayer.jar .
           cd ..
           
-          # Create a fat JAR by extracting and repackaging all dependency JARs
-          # First, extract all non-JavaFX dependency JARs into a temp directory
+          # Create a fat JAR by extracting and repackaging all non-JavaFX dependency JARs
           mkdir -p temp-lib
           for jar in lib/jaudiotagger-3.0.1.jar lib/batik-all-1.19.jar lib/svg-salamander-1.1.5.3.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
             cd temp-lib
@@ -54,17 +53,52 @@ jobs:
           jar xf ../SakuraPlayer.jar
           cd ..
           
-          # Repackage everything into a single fat JAR
+          # Repackage everything into a single fat JAR, preserving Main-Class
           cd temp-lib
           jar cfm ../SakuraPlayer.jar META-INF/MANIFEST.MF .
           cd ..
           rm -rf temp-lib
+      
+      - name: Create release package
+        run: |
+          # Create a release directory
+          mkdir -p release/SakuraPlayer/lib
+          
+          # Copy the fat JAR
+          cp SakuraPlayer.jar release/SakuraPlayer/
+          
+          # Copy JavaFX JARs (needed at runtime for module path)
+          cp lib/javafx.base.jar release/SakuraPlayer/lib/
+          cp lib/javafx.controls.jar release/SakuraPlayer/lib/
+          cp lib/javafx.graphics.jar release/SakuraPlayer/lib/
+          cp lib/javafx.media.jar release/SakuraPlayer/lib/
+          cp lib/javafx.swing.jar release/SakuraPlayer/lib/
+          cp lib/javafx.fxml.jar release/SakuraPlayer/lib/
+          cp lib/javafx.web.jar release/SakuraPlayer/lib/
+          
+          # Create launcher script for Windows
+          printf '@echo off\nset DIR=%%~dp0\njava --module-path "%%DIR%%lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar "%%DIR%%SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.bat
+          
+          # Create launcher script for macOS/Linux
+          printf '#!/bin/bash\nDIR="$(cd "$(dirname "$0")" && pwd)"\njava --module-path "$DIR/lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar "$DIR/SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.sh
+          chmod +x release/SakuraPlayer/SakuraPlayer.sh
+          
+          # Create the zip archive
+          cd release
+          zip -r ../SakuraPlayer.zip SakuraPlayer/
+          cd ..
       
       - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4
         with:
           name: SakuraPlayer.jar
           path: SakuraPlayer.jar
+      
+      - name: Upload release package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SakuraPlayer-Release-Package
+          path: release/SakuraPlayer/
       
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -74,11 +108,24 @@ jobs:
           body: |
             ## SakuraPlayer ${{ github.ref_name }}
             
-            Download the JAR file below to run SakuraPlayer on any platform with Java 23+ installed.
+            ### 📦 Download
+            - **SakuraPlayer.zip** — Complete package with launcher scripts (recommended)
+            - **SakuraPlayer.jar** — Standalone JAR file only
             
-            ### How to run:
+            ### 🚀 How to run
+            
+            **Option 1 (Recommended):** Download `SakuraPlayer.zip`, extract it, and run:
+            - Windows: Double-click `SakuraPlayer.bat`
+            - macOS/Linux: Run `./SakuraPlayer.sh` in terminal
+            
+            **Option 2 (JAR only):** Download `SakuraPlayer.jar` and run:
             ```bash
-            java -jar SakuraPlayer.jar
+            java --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar SakuraPlayer.jar
             ```
-          files: SakuraPlayer.jar
+            
+            ### 📋 Requirements
+            - Java 23+ installed
+          files: |
+            SakuraPlayer.jar
+            SakuraPlayer.zip
           generate_release_notes: true
