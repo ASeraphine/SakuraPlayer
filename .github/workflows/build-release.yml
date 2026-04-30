@@ -214,6 +214,22 @@ jobs:
       - name: List artifacts
         run: ls -la artifacts/ && find artifacts/ -type f
       
+      - name: Prepare release files
+        run: |
+          # Collect all available artifacts into a single directory
+          mkdir -p release-files
+          if [ -d "artifacts/Sakura-Player-macOS" ]; then
+            cp -r artifacts/Sakura-Player-macOS/* release-files/ 2>/dev/null || true
+          fi
+          if [ -d "artifacts/Sakura-Player-Windows" ]; then
+            cp -r artifacts/Sakura-Player-Windows/* release-files/ 2>/dev/null || true
+          fi
+          if [ -d "artifacts/SakuraPlayer.jar" ]; then
+            cp -r artifacts/SakuraPlayer.jar/* release-files/ 2>/dev/null || true
+          fi
+          echo "Release files:"
+          ls -la release-files/
+      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -254,8 +270,6 @@ jobs:
             - **macOS**: macOS 13+ (Ventura or later)
             - **Windows**: Windows 10/11 64-bit
             - **JAR**: Java 25+ with JavaFX 25
-          files: |
-            artifacts/Sakura-Player-macOS/*
-            artifacts/Sakura-Player-Windows/*
-            artifacts/SakuraPlayer.jar/*
+          files: release-files/*
           generate_release_notes: true
+
