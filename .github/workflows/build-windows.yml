@@ -1,0 +1,30 @@
+name: Build Windows .exe
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allows you to run manually from GitHub
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      
+      - name: Build .exe with jpackage
+        shell: cmd
+        run: build_windows.bat
+      
+      - name: Upload .exe as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sakura-Player-Windows
+          path: dist/*.exe
