@@ -61,9 +61,8 @@ jpackage \
   --copyright "Copyright © 2026" \
   --mac-package-name "Sakura Player" \
   --mac-package-identifier com.sakuraplayer.app \
-  --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Duser.dir=\${APPDIR}" \
-  --module-path "javafx-modules" \
+  --module-path "$BASE_DIR/javafx-modules" \
   --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web \
   --dest "$BASE_DIR/dist"
 

@@ -54,7 +54,7 @@ copy lib\mp3agic-0.9.0.jar input\
 
 REM Create .exe bundle with jpackage
 echo Creating Windows .exe bundle...
-jpackage --type exe --input "input" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%BASE_DIR%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%%APPDIR%%" --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%BASE_DIR%\dist"
+jpackage --type exe --input "input" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%BASE_DIR%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "-Duser.dir=%APPDIR%" --module-path "%BASE_DIR%\javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%BASE_DIR%\dist"
 
 REM Cleanup
 if exist SakuraPlayer.jar del SakuraPlayer.jar
