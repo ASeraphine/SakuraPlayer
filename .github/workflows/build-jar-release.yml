@@ -40,17 +40,25 @@ jobs:
           jar uf ../SakuraPlayer.jar .
           cd ..
           
-          # Copy non-JavaFX libraries into a lib/ directory inside the JAR
-          mkdir -p jar-lib
-          cp lib/jaudiotagger-3.0.1.jar jar-lib/
-          cp lib/batik-all-1.19.jar jar-lib/
-          cp lib/svg-salamander-1.1.5.3.jar jar-lib/
-          cp lib/jlayer-1.0.1.jar jar-lib/
-          cp lib/mp3agic-0.9.0.jar jar-lib/
-          cd jar-lib
-          jar uf ../SakuraPlayer.jar .
+          # Create a fat JAR by extracting and repackaging all dependency JARs
+          # First, extract all non-JavaFX dependency JARs into a temp directory
+          mkdir -p temp-lib
+          for jar in lib/jaudiotagger-3.0.1.jar lib/batik-all-1.19.jar lib/svg-salamander-1.1.5.3.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
+            cd temp-lib
+            jar xf ../$jar
+            cd ..
+          done
+          
+          # Extract the main JAR into the same temp directory
+          cd temp-lib
+          jar xf ../SakuraPlayer.jar
           cd ..
-          rm -rf jar-lib
+          
+          # Repackage everything into a single fat JAR
+          cd temp-lib
+          jar cfm ../SakuraPlayer.jar META-INF/MANIFEST.MF .
+          cd ..
+          rm -rf temp-lib
       
       - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4
