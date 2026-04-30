@@ -28,7 +28,7 @@ jobs:
       - name: Build JAR
         run: |
           # Compile Java sources
-          javac -cp "lib/*:src" src/*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
           
           # Create executable JAR
           cd bin
@@ -40,10 +40,17 @@ jobs:
           jar uf ../SakuraPlayer.jar .
           cd ..
           
-          # Bundle libraries into the JAR
-          cd lib
+          # Copy non-JavaFX libraries into a lib/ directory inside the JAR
+          mkdir -p jar-lib
+          cp lib/jaudiotagger-3.0.1.jar jar-lib/
+          cp lib/batik-all-1.19.jar jar-lib/
+          cp lib/svg-salamander-1.1.5.3.jar jar-lib/
+          cp lib/jlayer-1.0.1.jar jar-lib/
+          cp lib/mp3agic-0.9.0.jar jar-lib/
+          cd jar-lib
           jar uf ../SakuraPlayer.jar .
           cd ..
+          rm -rf jar-lib
       
       - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4

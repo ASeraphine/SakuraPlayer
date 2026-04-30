@@ -10,7 +10,7 @@ mkdir dist
 
 REM Compile Java sources
 echo Compiling source code...
-javac -cp "lib/*;src" src/*.java -d bin
+javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
 
 REM Create executable JAR
 echo Creating JAR file...
@@ -24,17 +24,9 @@ cd res
 jar uf ..\SakuraPlayer.jar .
 cd ..
 
-REM Bundle only .jar libraries (skip .dylib files)
-echo Bundling libraries...
-cd lib
-for %%f in (*.jar) do (
-    jar uf ..\SakuraPlayer.jar %%f
-)
-cd ..
-
 REM Create .exe bundle with jpackage
 echo Creating Windows .exe bundle...
-jpackage --type exe --input "%CD%" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%CD%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%APPDIR%" --dest "%CD%\dist"
+jpackage --type exe --input "%CD%" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%CD%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%%APPDIR%%" --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%CD%\dist"
 
 REM Cleanup
 if exist SakuraPlayer.jar del SakuraPlayer.jar

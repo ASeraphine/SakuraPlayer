@@ -9,7 +9,7 @@ mkdir -p dist
 
 # Compile Java sources
 echo "Compiling source code..."
-javac -cp "lib/*:src" src/*.java -d bin
+javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
 
 # Create executable JAR
 echo "Creating JAR file..."
@@ -17,12 +17,9 @@ cd bin
 jar cvfe ../SakuraPlayer.jar App *
 cd ..
 
-# Copy resources and libraries into the JAR
-echo "Bundling resources and libraries..."
+# Bundle resources into the JAR
+echo "Bundling resources..."
 cd res
-jar uf ../SakuraPlayer.jar .
-cd ..
-cd lib
 jar uf ../SakuraPlayer.jar .
 cd ..
 
@@ -42,6 +39,8 @@ jpackage \
   --mac-package-identifier com.sakuraplayer.app \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Duser.dir=\${APPDIR}" \
+  --module-path "lib" \
+  --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web \
   --dest "$PWD/dist"
 
 # Cleanup
