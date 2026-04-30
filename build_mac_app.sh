@@ -7,12 +7,22 @@ echo "Building Sakura Player macOS Application Bundle..."
 BASE_DIR="$PWD"
 
 # Clean previous builds
-rm -rf dist build input SakuraPlayer.jar
-mkdir -p dist input
+rm -rf dist build input javafx-modules SakuraPlayer.jar
+mkdir -p dist input javafx-modules
+
+# Copy only the JavaFX module JARs (exclude JDK internal modules that cause hash conflicts)
+echo "Preparing JavaFX module path..."
+cp lib/javafx.base.jar javafx-modules/
+cp lib/javafx.controls.jar javafx-modules/
+cp lib/javafx.graphics.jar javafx-modules/
+cp lib/javafx.media.jar javafx-modules/
+cp lib/javafx.swing.jar javafx-modules/
+cp lib/javafx.fxml.jar javafx-modules/
+cp lib/javafx.web.jar javafx-modules/
 
 # Compile Java sources
 echo "Compiling source code..."
-javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+javac --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
 
 # Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo "Creating JAR file..."
@@ -53,13 +63,13 @@ jpackage \
   --mac-package-identifier com.sakuraplayer.app \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --java-options "-Duser.dir=\${APPDIR}" \
-  --module-path "lib" \
+  --module-path "javafx-modules" \
   --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web \
   --dest "$BASE_DIR/dist"
 
 # Cleanup
 rm SakuraPlayer.jar
-rm -rf input
+rm -rf input javafx-modules
 
 echo ""
 echo "✅ Build complete!"
