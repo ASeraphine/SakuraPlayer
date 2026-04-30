@@ -3,6 +3,9 @@
 # Sakura Player macOS App Builder
 echo "Building Sakura Player macOS Application Bundle..."
 
+# Store the base directory
+BASE_DIR="$PWD"
+
 # Clean previous builds
 rm -rf dist build input SakuraPlayer.jar
 mkdir -p dist input
@@ -14,16 +17,16 @@ javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swin
 # Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo "Creating JAR file..."
 cd bin
-echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > ../manifest.txt
-jar cvfm ../SakuraPlayer.jar ../manifest.txt App *
-cd ..
+echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > "$BASE_DIR/manifest.txt"
+jar cvfm "$BASE_DIR/SakuraPlayer.jar" "$BASE_DIR/manifest.txt" *.class
+cd "$BASE_DIR"
 rm manifest.txt
 
 # Bundle resources into the JAR
 echo "Bundling resources..."
 cd res
-jar uf ../SakuraPlayer.jar .
-cd ..
+jar uf "$BASE_DIR/SakuraPlayer.jar" .
+cd "$BASE_DIR"
 
 # Copy the JAR and non-JavaFX dependency JARs into the input directory
 echo "Preparing input directory for jpackage..."
@@ -42,7 +45,7 @@ jpackage \
   --main-jar SakuraPlayer.jar \
   --main-class App \
   --name "Sakura Player" \
-  --icon "$PWD/res/icon.icns" \
+  --icon "$BASE_DIR/res/icon.icns" \
   --app-version 1.0 \
   --vendor "Sakura Player" \
   --copyright "Copyright © 2026" \
@@ -52,7 +55,7 @@ jpackage \
   --java-options "-Duser.dir=\${APPDIR}" \
   --module-path "lib" \
   --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web \
-  --dest "$PWD/dist"
+  --dest "$BASE_DIR/dist"
 
 # Cleanup
 rm SakuraPlayer.jar

@@ -2,6 +2,9 @@
 REM Sakura Player Windows App Builder
 echo Building Sakura Player Windows Application...
 
+REM Store the base directory
+set BASE_DIR=%CD%
+
 REM Clean previous builds
 if exist dist rmdir /s /q dist
 if exist build rmdir /s /q build
@@ -17,16 +20,16 @@ javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swin
 REM Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo Creating JAR file...
 cd bin
-echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
-jar cvfm ..\SakuraPlayer.jar ..\manifest.txt App *
-cd ..
+echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > "%BASE_DIR%\manifest.txt"
+jar cvfm "%BASE_DIR%\SakuraPlayer.jar" "%BASE_DIR%\manifest.txt" *.class
+cd "%BASE_DIR%"
 del manifest.txt
 
 REM Bundle resources into the JAR
 echo Bundling resources...
 cd res
-jar uf ..\SakuraPlayer.jar .
-cd ..
+jar uf "%BASE_DIR%\SakuraPlayer.jar" .
+cd "%BASE_DIR%"
 
 REM Copy the JAR and non-JavaFX dependency JARs into the input directory
 echo Preparing input directory for jpackage...
@@ -39,7 +42,7 @@ copy lib\mp3agic-0.9.0.jar input\
 
 REM Create .exe bundle with jpackage
 echo Creating Windows .exe bundle...
-jpackage --type exe --input "input" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%CD%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%%APPDIR%%" --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%CD%\dist"
+jpackage --type exe --input "input" --main-jar SakuraPlayer.jar --main-class App --name "SakuraPlayer" --icon "%BASE_DIR%\res\icon.ico" --app-version 1.0 --vendor "SakuraPlayer" --win-dir-chooser --win-menu --win-shortcut --java-options "--enable-native-access=ALL-UNNAMED" --java-options "-Duser.dir=%%APPDIR%%" --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web --dest "%BASE_DIR%\dist"
 
 REM Cleanup
 if exist SakuraPlayer.jar del SakuraPlayer.jar
