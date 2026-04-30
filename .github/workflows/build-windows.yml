@@ -21,15 +21,9 @@ jobs:
       
       - name: Install Launch4j
         run: |
-          # Download Launch4j
-          curl -L -o launch4j.zip https://github.com/ASeraphine/SakuraPlayer/releases/download/tools/launch4j-3.50-win32.zip
-          # Alternative: download from sourceforge
-          # curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          if not exist launch4j.zip (
-            echo "Downloading from alternative URL..."
-            curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          )
-          powershell -Command "Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j"
+          # Download Launch4j from sourceforge
+          curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
+          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j
           echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
       
