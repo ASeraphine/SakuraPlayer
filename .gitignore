@@ -6,10 +6,15 @@ bin/
 dist/
 build/
 SakuraPlayer.jar
+input/
+javafx-modules/
+custom-runtime/
+manifest.txt
 
 # macOS
 .DS_Store
 *.DS_Store
+*.app
 
 # IDE
 .vscode/
@@ -18,3 +23,13 @@ SakuraPlayer.jar
 
 # OS generated files
 Thumbs.db
+
+# Build tools (downloaded SDKs)
+tools/
+
+# JavaFX native libraries (copied from SDK)
+lib/*.dylib
+lib/*.so
+lib/*.dll
+lib/*.pdb
+

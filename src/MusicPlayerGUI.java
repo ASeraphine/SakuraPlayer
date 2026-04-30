@@ -66,10 +66,12 @@ public class MusicPlayerGUI extends JFrame {
 
         // ✅ Custom Application Icon
         try {
-            setIconImage(ImageIO.read(new File("res/icon-512.png")));
+            setIconImage(ImageIO.read(getClass().getResourceAsStream("/icon-512.png")));
+
         } catch (Exception e) {
             // ignore
         }
+
 
         // sets width and height of the GUI
         setSize(673, 533);
@@ -89,31 +91,33 @@ public class MusicPlayerGUI extends JFrame {
         // Load SVG background
         try {
             backgroundIcon = new SVGIcon();
-            backgroundIcon.setSvgURI(new File("res/Background3.svg").toURI());
+            backgroundIcon.setSvgURI(getClass().getResource("/Background3.svg").toURI());
 
             titleBarIcon = new SVGIcon();
-            titleBarIcon.setSvgURI(new File("res/Title Bar3.svg").toURI());
+            titleBarIcon.setSvgURI(getClass().getResource("/Title Bar3.svg").toURI());
 
             songBarIcon = new SVGIcon();
-            songBarIcon.setSvgURI(new File("res/Rectangle 2.svg").toURI());
+            songBarIcon.setSvgURI(getClass().getResource("/Rectangle 2.svg").toURI());
 
             musicBarIcon = new SVGIcon();
-            musicBarIcon.setSvgURI(new File("res/Music Bar.svg").toURI());
+            musicBarIcon.setSvgURI(getClass().getResource("/Music Bar.svg").toURI());
 
             thumbIcon = new SVGIcon();
-            thumbIcon.setSvgURI(new File("res/Current Place.svg").toURI());
+            thumbIcon.setSvgURI(getClass().getResource("/Current Place.svg").toURI());
 
             verticalBarIcon = new SVGIcon();
-            verticalBarIcon.setSvgURI(new File("res/Line 4.svg").toURI());
+            verticalBarIcon.setSvgURI(getClass().getResource("/Line 4.svg").toURI());
 
             songListBGIcon = new SVGIcon();
-            songListBGIcon.setSvgURI(new File("res/Song List BG.svg").toURI());
+            songListBGIcon.setSvgURI(getClass().getResource("/Song List BG.svg").toURI());
 
             horizontalBarIcon = new SVGIcon();
-            horizontalBarIcon.setSvgURI(new File("res/Rectangle 5.svg").toURI());
+            horizontalBarIcon.setSvgURI(getClass().getResource("/Rectangle 5.svg").toURI());
+
         } catch (Exception e) {
             
         }
+
 
 
         // Create custom content pane that paints the SVG background
@@ -291,19 +295,22 @@ public class MusicPlayerGUI extends JFrame {
                     musicPlayer.pause();
                     // Show PLAY icon when paused
                     SVGIcon playIcon = new SVGIcon();
-                    playIcon.setSvgURI(new File("res/Play2.svg").toURI());
+                    playIcon.setSvgURI(getClass().getResource("/Play2.svg").toURI());
+
                     playPauseButton.setIcon(playIcon);
                 } else {
                     musicPlayer.resume();
                     // Show PAUSE icon when playing
                     SVGIcon pauseIcon = new SVGIcon();
-                    pauseIcon.setSvgURI(new File("res/Pause2.svg").toURI());
+                    pauseIcon.setSvgURI(getClass().getResource("/Pause2.svg").toURI());
+
                     playPauseButton.setIcon(pauseIcon);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
+
 
         musicBar.add(createSvgButton("res/Next2.svg", 190, 40, e -> playNext()));
 
@@ -633,7 +640,13 @@ public class MusicPlayerGUI extends JFrame {
 
     private JButton createSvgButton(String svgPath, int x, int y, ActionListener action) {
         SVGIcon icon = new SVGIcon();
-        icon.setSvgURI(new File(svgPath).toURI());
+        try {
+            // Strip "res/" prefix if present since resources are at JAR root
+            String resourcePath = svgPath.startsWith("res/") ? svgPath.substring(4) : svgPath;
+            icon.setSvgURI(getClass().getResource("/" + resourcePath).toURI());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         JButton button = new JButton(icon);
         button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
         button.setBorder(null);
@@ -644,6 +657,9 @@ public class MusicPlayerGUI extends JFrame {
         }
         return button;
     }
+
+
+
 
     private void addGuiComponents() {
         playlist = new ArrayList<>();
@@ -705,8 +721,10 @@ public class MusicPlayerGUI extends JFrame {
                 
                 // Update button to pause state
                 SVGIcon pauseIcon = new SVGIcon();
-                pauseIcon.setSvgURI(new File("res/Pause2.svg").toURI());
+                pauseIcon.setSvgURI(getClass().getResource("/Pause2.svg").toURI());
+
                 playPauseButton.setIcon(pauseIcon);
+
             }
         } catch (Exception e) {
             e.printStackTrace();

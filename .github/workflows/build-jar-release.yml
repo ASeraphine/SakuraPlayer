@@ -28,7 +28,8 @@ jobs:
       - name: Build JAR
         run: |
           # Compile Java sources
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+
           
           # Create executable JAR with Main-Class manifest
           cd bin
@@ -77,10 +78,11 @@ jobs:
           cp lib/javafx.web.jar release/SakuraPlayer/lib/
           
           # Create launcher script for Windows
-          printf '@echo off\nset DIR=%%~dp0\njava --module-path "%%DIR%%lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar "%%DIR%%SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.bat
+          printf '@echo off\nset DIR=%%~dp0\njava --module-path "%%DIR%%lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -jar "%%DIR%%SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.bat
           
           # Create launcher script for macOS/Linux
-          printf '#!/bin/bash\nDIR="$(cd "$(dirname "$0")" && pwd)"\njava --module-path "$DIR/lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web -jar "$DIR/SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.sh
+          printf '#!/bin/bash\nDIR="$(cd "$(dirname "$0")" && pwd)"\njava --module-path "$DIR/lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -jar "$DIR/SakuraPlayer.jar"\n' > release/SakuraPlayer/SakuraPlayer.sh
+
           chmod +x release/SakuraPlayer/SakuraPlayer.sh
           
           # Create the zip archive

@@ -1,0 +1,260 @@
+name: Build and Release All Platforms
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0)'
+        required: false
+        default: '1.0'
+
+jobs:
+  # ============================================
+  # Build JAR (cross-platform, runs on Ubuntu)
+  # ============================================
+  build-jar:
+    name: Build JAR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      
+      - name: Build JAR
+        run: |
+          # Compile Java sources
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+
+          # Create executable JAR with Main-Class manifest
+          cd bin
+          jar cvfe ../SakuraPlayer.jar App *
+          cd ..
+          
+          # Bundle resources into the JAR
+          cd res
+          jar uf ../SakuraPlayer.jar .
+          cd ..
+          
+          # Create a fat JAR by extracting and repackaging all non-JavaFX dependency JARs
+          mkdir -p temp-lib
+          for jar in lib/jaudiotagger-3.0.1.jar lib/batik-all-1.19.jar lib/svg-salamander-1.1.5.3.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
+            cd temp-lib
+            jar xf ../$jar
+            cd ..
+          done
+          
+          # Extract the main JAR into the same temp directory
+          cd temp-lib
+          jar xf ../SakuraPlayer.jar
+          cd ..
+          
+          # Repackage everything into a single fat JAR, preserving Main-Class
+          cd temp-lib
+          jar cfm ../SakuraPlayer.jar META-INF/MANIFEST.MF .
+          cd ..
+          rm -rf temp-lib
+      
+      - name: Upload JAR as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SakuraPlayer.jar
+          path: SakuraPlayer.jar
+          retention-days: 1
+
+  # ============================================
+  # Build macOS .app
+  # ============================================
+  build-macos:
+    name: Build macOS .app
+    runs-on: macos-latest
+    needs: build-jar
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      
+      - name: Build macOS .app
+        run: |
+          chmod +x build_mac_app.sh
+          ./build_mac_app.sh
+      
+      - name: Create DMG from .app
+        run: |
+          # Install create-dmg if not available
+          if ! command -v create-dmg &> /dev/null; then
+            brew install create-dmg
+          fi
+          
+          # Create DMG
+          create-dmg \
+            --volname "Sakura Player" \
+            --volicon "res/icon.icns" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Sakura Player.app" 150 190 \
+            --hide-extension "Sakura Player.app" \
+            --app-drop-link 450 190 \
+            "dist/Sakura Player.dmg" \
+            "dist/Sakura Player.app"
+      
+      - name: Upload macOS DMG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sakura-Player-macOS
+          path: dist/Sakura Player.dmg
+          retention-days: 1
+
+  # ============================================
+  # Build Windows .exe
+  # ============================================
+  build-windows:
+    name: Build Windows .exe
+    runs-on: windows-latest
+    needs: build-jar
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      
+      - name: Install Launch4j
+        run: |
+          # Download Launch4j from sourceforge
+          curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
+          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j
+          echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: pwsh
+      
+      - name: Build JAR
+        run: |
+          # Compile Java sources
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
+
+          # Create executable JAR with Class-Path manifest
+          cd bin
+          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
+          jar cvfm ..\SakuraPlayer.jar ..\manifest.txt *.class
+          cd ..
+          del manifest.txt
+          
+          # Bundle resources into the JAR
+          cd res
+          jar uf ..\SakuraPlayer.jar .
+          cd ..
+        shell: cmd
+      
+      - name: Prepare input directory for Launch4j
+        run: |
+          mkdir input
+          copy SakuraPlayer.jar input\
+          copy lib\jaudiotagger-3.0.1.jar input\
+          copy lib\batik-all-1.19.jar input\
+          copy lib\svg-salamander-1.1.5.3.jar input\
+          copy lib\jlayer-1.0.1.jar input\
+          copy lib\mp3agic-0.9.0.jar input\
+          copy lib\javafx.base.jar input\
+          copy lib\javafx.controls.jar input\
+          copy lib\javafx.graphics.jar input\
+          copy lib\javafx.media.jar input\
+          copy lib\javafx.swing.jar input\
+          copy lib\javafx.fxml.jar input\
+          copy lib\javafx.web.jar input\
+        shell: cmd
+      
+      - name: Build .exe with Launch4j
+        run: |
+          mkdir dist
+          launch4jc.exe launch4j.xml
+        shell: cmd
+      
+      - name: Upload Windows .exe as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sakura-Player-Windows
+          path: dist/*.exe
+          retention-days: 1
+
+  # ============================================
+  # Create Release with all artifacts
+  # ============================================
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-jar, build-macos, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: List artifacts
+        run: ls -la artifacts/ && find artifacts/ -type f
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SakuraPlayer ${{ github.ref_name }}
+          body: |
+            ## SakuraPlayer ${{ github.ref_name }}
+            
+            ### 📦 Downloads
+            
+            **🍎 macOS**
+            - `Sakura-Player-macOS.dmg` — Drag to Applications folder and run
+            - Requires macOS 13+ (Apple Silicon or Intel)
+            
+            **🪟 Windows**
+            - `Sakura-Player-Windows.exe` — Portable executable, no installation needed
+            - Requires Windows 10/11 64-bit
+            
+            **📦 Cross-Platform**
+            - `SakuraPlayer.jar` — Run with `java -jar SakuraPlayer.jar` (requires Java 25+ and JavaFX 25)
+            
+            ### 🚀 How to install
+            
+            **macOS:**
+            1. Download `Sakura-Player-macOS.dmg`
+            2. Open the DMG and drag `Sakura Player.app` to Applications
+            3. Right-click → Open (first time only)
+            
+            **Windows:**
+            1. Download `Sakura-Player-Windows.exe`
+            2. Double-click to run (no installation needed)
+            
+            **JAR (any OS):**
+            ```bash
+            java --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -jar SakuraPlayer.jar
+            ```
+            
+            ### 📋 Requirements
+            - **macOS**: macOS 13+ (Ventura or later)
+            - **Windows**: Windows 10/11 64-bit
+            - **JAR**: Java 25+ with JavaFX 25
+          files: |
+            artifacts/Sakura-Player-macOS/*
+            artifacts/Sakura-Player-Windows/*
+            artifacts/SakuraPlayer.jar/*
+          generate_release_notes: true
