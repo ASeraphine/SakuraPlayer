@@ -652,6 +652,7 @@ public class MusicPlayerGUI extends JFrame {
         button.setBorder(null);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
+        button.setRolloverEnabled(false);
         if (action != null) {
             button.addActionListener(action);
         }
