@@ -39,34 +39,17 @@ jobs:
           # Compile Java sources
           javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
 
-          # Create executable JAR with Main-Class manifest
+          # Create executable JAR with Main-Class and Class-Path manifest
           cd bin
-          jar cvfe ../SakuraPlayer.jar App *
+          echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > manifest.txt
+          jar cvfm ../SakuraPlayer.jar manifest.txt *.class
           cd ..
+          rm -f bin/manifest.txt
           
           # Bundle resources into the JAR
           cd res
           jar uf ../SakuraPlayer.jar .
           cd ..
-          
-          # Create a fat JAR by extracting and repackaging all non-JavaFX dependency JARs
-          mkdir -p temp-lib
-          for jar in lib/jaudiotagger-3.0.1.jar lib/batik-all-1.19.jar lib/svg-salamander-1.1.5.3.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
-            cd temp-lib
-            jar xf ../$jar
-            cd ..
-          done
-          
-          # Extract the main JAR into the same temp directory
-          cd temp-lib
-          jar xf ../SakuraPlayer.jar
-          cd ..
-          
-          # Repackage everything into a single fat JAR, preserving Main-Class
-          cd temp-lib
-          jar cfm ../SakuraPlayer.jar META-INF/MANIFEST.MF .
-          cd ..
-          rm -rf temp-lib
       
       - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4
@@ -190,6 +173,13 @@ jobs:
           copy dist\SakuraPlayer.exe dist\SakuraPlayer\
           xcopy /E /I runtime dist\SakuraPlayer\runtime
           del dist\SakuraPlayer.exe
+          
+          :: Copy dependency JARs (needed for Class-Path manifest)
+          copy lib\jaudiotagger-3.0.1.jar dist\SakuraPlayer\
+          copy lib\batik-all-1.19.jar dist\SakuraPlayer\
+          copy lib\svg-salamander-1.1.5.3.jar dist\SakuraPlayer\
+          copy lib\jlayer-1.0.1.jar dist\SakuraPlayer\
+          copy lib\mp3agic-0.9.0.jar dist\SakuraPlayer\
           
           :: Create debug .bat that shows errors
           echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
