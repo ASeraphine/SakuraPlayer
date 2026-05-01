@@ -115,7 +115,6 @@ jobs:
   build-windows:
     name: Build Windows .exe
     runs-on: windows-latest
-    needs: build-jar
     
     steps:
       - name: Checkout code
@@ -140,11 +139,28 @@ jobs:
           echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
       
-      - name: Download fat JAR from build-jar job
-        uses: actions/download-artifact@v4
-        with:
-          name: SakuraPlayer.jar
-          path: .
+      - name: Build JAR on Windows
+        run: |
+          # Compile Java sources
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar;lib/batik-all-1.19.jar;lib/svg-salamander-1.1.5.3.jar;lib/jlayer-1.0.1.jar;lib/mp3agic-0.9.0.jar;src" src/*.java -d bin
+
+          # Create executable JAR with Main-Class and Class-Path manifest
+          cd bin
+          echo Main-Class: App > manifest.txt
+          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar >> manifest.txt
+          jar cvfm ..\SakuraPlayer.jar manifest.txt *.class
+          cd ..
+          del bin\manifest.txt
+          
+          # Bundle resources into the JAR
+          cd res
+          jar uf ..\SakuraPlayer.jar .
+          cd ..
+          
+          :: Verify JAR
+          dir SakuraPlayer.jar
+          jar tf SakuraPlayer.jar | find "App.class"
+        shell: cmd
       
       - name: Create custom JRE with jlink
         run: |
