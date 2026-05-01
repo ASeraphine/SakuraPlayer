@@ -41,7 +41,8 @@ jobs:
 
           # Create executable JAR with Main-Class and Class-Path manifest
           cd bin
-          echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > manifest.txt
+          echo "Main-Class: App" > manifest.txt
+          echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" >> manifest.txt
           jar cvfm ../SakuraPlayer.jar manifest.txt *.class
           cd ..
           rm -f bin/manifest.txt
