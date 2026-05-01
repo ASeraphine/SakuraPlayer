@@ -189,7 +189,13 @@ jobs:
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo If the app does not appear, check the error messages above. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\java" -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo Checking files... >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo if not exist "%%~dp0SakuraPlayer.jar" echo ERROR: SakuraPlayer.jar not found! >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo if not exist "%%~dp0runtime\bin\java.exe" echo ERROR: java.exe not found! >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo Running: "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo App closed. Press any key to exit. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo pause >> dist\SakuraPlayer\SakuraPlayer.bat
