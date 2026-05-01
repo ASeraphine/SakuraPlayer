@@ -126,10 +126,10 @@ jobs:
           retention-days: 1
 
   # ============================================
-  # Build Windows .exe
+  # Build Windows Installer (bundled JRE)
   # ============================================
   build-windows:
-    name: Build Windows .exe
+    name: Build Windows Installer
     runs-on: windows-latest
     needs: build-jar
     
@@ -143,96 +143,57 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       
-      - name: Install Launch4j
-        run: |
-          # Download Launch4j from sourceforge
-          curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
-          if (Test-Path "C:\launch4j-temp\launch4j") {
-            Move-Item "C:\launch4j-temp\launch4j\*" "C:\launch4j\" -Force
-          } else {
-            Move-Item "C:\launch4j-temp\*" "C:\launch4j\" -Force
-          }
-          Remove-Item -Recurse -Force C:\launch4j-temp
-          echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: pwsh
-      
       - name: Download fat JAR from build-jar job
         uses: actions/download-artifact@v4
         with:
           name: SakuraPlayer.jar
           path: .
       
-      - name: Prepare input directory for Launch4j
+      - name: Create custom JRE with jlink
         run: |
-          mkdir input
-          mkdir input\lib
-          copy SakuraPlayer.jar input\
-          copy lib\jaudiotagger-3.0.1.jar input\lib\
-          copy lib\batik-all-1.19.jar input\lib\
-          copy lib\svg-salamander-1.1.5.3.jar input\lib\
-          copy lib\jlayer-1.0.1.jar input\lib\
-          copy lib\mp3agic-0.9.0.jar input\lib\
-          copy lib\javafx.base.jar input\lib\
-          copy lib\javafx.controls.jar input\lib\
-          copy lib\javafx.graphics.jar input\lib\
-          copy lib\javafx.media.jar input\lib\
-          copy lib\javafx.swing.jar input\lib\
-          copy lib\javafx.fxml.jar input\lib\
-          copy lib\javafx.web.jar input\lib\
+          # Find the JDK home (set by setup-java)
+          echo "JAVA_HOME: %JAVA_HOME%"
+          
+          # Create a custom runtime image with only the modules we need
+          "%JAVA_HOME%\bin\jlink" ^
+            --module-path "%JAVA_HOME%\jmods";lib ^
+            --add-modules java.base,java.logging,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web ^
+            --strip-debug ^
+            --no-header-files ^
+            --no-man-pages ^
+            --compress=2 ^
+            --output runtime
         shell: cmd
       
-      - name: Build .exe with Launch4j
+      - name: Create Windows installer with jpackage
         run: |
           mkdir dist
-          C:\launch4j\launch4jc.exe launch4j.xml
+          
+          "%JAVA_HOME%\bin\jpackage" ^
+            --type exe ^
+            --input . ^
+            --main-jar SakuraPlayer.jar ^
+            --main-class App ^
+            --runtime-image runtime ^
+            --module-path lib ^
+            --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging ^
+            --name "SakuraPlayer" ^
+            --app-version 1.1 ^
+            --description "SakuraPlayer Music Player" ^
+            --vendor "SakuraPlayer" ^
+            --icon res\icon.ico ^
+            --dest dist ^
+            --win-dir-chooser ^
+            --win-menu ^
+            --win-shortcut ^
+            --verbose
         shell: cmd
       
-      - name: Create launcher batch file
-        run: |
-          echo @echo off > dist\SakuraPlayer.bat
-          echo echo SakuraPlayer is starting... >> dist\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer.bat
-          echo java --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir=%%~dp0 -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
-          echo if errorlevel 1 ( >> dist\SakuraPlayer.bat
-          echo   echo. >> dist\SakuraPlayer.bat
-          echo   echo ERROR: SakuraPlayer failed to start. >> dist\SakuraPlayer.bat
-          echo   echo Make sure you have Java 25+ installed. >> dist\SakuraPlayer.bat
-          echo   echo Download from: https://adoptium.net/ >> dist\SakuraPlayer.bat
-          echo   pause >> dist\SakuraPlayer.bat
-          echo ) >> dist\SakuraPlayer.bat
-        shell: cmd
-      
-      - name: Create Windows distribution ZIP
-        run: |
-          mkdir sakuraplayer-windows
-          copy dist\SakuraPlayer.exe sakuraplayer-windows\
-          copy dist\SakuraPlayer.bat sakuraplayer-windows\
-          copy SakuraPlayer.jar sakuraplayer-windows\
-          mkdir sakuraplayer-windows\lib
-          copy lib\javafx.base.jar sakuraplayer-windows\lib\
-          copy lib\javafx.controls.jar sakuraplayer-windows\lib\
-          copy lib\javafx.graphics.jar sakuraplayer-windows\lib\
-          copy lib\javafx.media.jar sakuraplayer-windows\lib\
-          copy lib\javafx.swing.jar sakuraplayer-windows\lib\
-          copy lib\javafx.fxml.jar sakuraplayer-windows\lib\
-          copy lib\javafx.web.jar sakuraplayer-windows\lib\
-          copy lib\jaudiotagger-3.0.1.jar sakuraplayer-windows\lib\
-          copy lib\batik-all-1.19.jar sakuraplayer-windows\lib\
-          copy lib\svg-salamander-1.1.5.3.jar sakuraplayer-windows\lib\
-          copy lib\jlayer-1.0.1.jar sakuraplayer-windows\lib\
-          copy lib\mp3agic-0.9.0.jar sakuraplayer-windows\lib\
-          cd sakuraplayer-windows
-          tar -a -c -f ..\dist\SakuraPlayer-Windows.zip *
-          cd ..
-          rmdir /s /q sakuraplayer-windows
-        shell: cmd
-      
-      - name: Upload Windows artifacts
+      - name: Upload Windows installer as artifact
         uses: actions/upload-artifact@v4
         with:
           name: Sakura-Player-Windows
-          path: dist/SakuraPlayer-Windows.zip
+          path: dist/SakuraPlayer-*.exe
           retention-days: 1
 
   # ============================================
@@ -284,11 +245,10 @@ jobs:
             - Requires macOS 13+ (Apple Silicon or Intel)
             
             **🪟 Windows**
-            - `Sakura-Player-Windows.exe` — Portable executable, no installation needed
-            - Requires Windows 10/11 64-bit
+            - `SakuraPlayer-1.1.exe` — Installer with bundled Java, no separate Java installation needed
             
             **📦 Cross-Platform**
-            - `SakuraPlayer.jar` — Run with `java -jar SakuraPlayer.jar` (requires Java 25+ and JavaFX 25)
+            - `SakuraPlayer.jar` — Run with `java -jar SakuraPlayer.jar` (requires Java 25+)
             
             ### 🚀 How to install
             
@@ -298,17 +258,19 @@ jobs:
             3. Right-click → Open (first time only)
             
             **Windows:**
-            1. Download `Sakura-Player-Windows.exe`
-            2. Double-click to run (no installation needed)
+            1. Download `SakuraPlayer-1.1.exe`
+            2. Run the installer — it will install SakuraPlayer with a bundled Java runtime
+            3. Launch from Start Menu or desktop shortcut
+            4. **No separate Java installation needed!**
             
             **JAR (any OS):**
             ```bash
-            java --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -jar SakuraPlayer.jar
+            java -jar SakuraPlayer.jar
             ```
             
             ### 📋 Requirements
             - **macOS**: macOS 13+ (Ventura or later)
             - **Windows**: Windows 10/11 64-bit
-            - **JAR**: Java 25+ with JavaFX 25
+            - **JAR**: Java 25+
           files: release-files/*
           generate_release_notes: true
