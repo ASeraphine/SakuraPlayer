@@ -175,8 +175,6 @@ jobs:
             --main-jar SakuraPlayer.jar ^
             --main-class App ^
             --runtime-image runtime ^
-            --module-path lib ^
-            --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging ^
             --name "SakuraPlayer" ^
             --app-version 1.1 ^
             --description "SakuraPlayer Music Player" ^
