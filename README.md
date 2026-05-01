@@ -1,6 +1,6 @@
 # SakuraPlayer 🎵
 
-![SakuraPlayer](res/SakuraPlayer-image.png)
+![SakuraPlayer](https://raw.githubusercontent.com/ASeraphine/SakuraPlayer/main/res/SakuraPlayer-image.png)
 
 A beautiful music player built with **Java** and **JavaFX**, featuring a sleek custom UI and support for various audio formats.
 
@@ -13,9 +13,6 @@ A beautiful music player built with **Java** and **JavaFX**, featuring a sleek c
 - ⏪⏩ Next/Previous track navigation
 - 📁 Load songs from your local files
 
-## 📸 Screenshots
-
-![SakuraPlayer](https://raw.githubusercontent.com/ASeraphine/SakuraPlayer/main/res/SakuraPlayer-image.png)
 
 ## 🚀 Download
 
