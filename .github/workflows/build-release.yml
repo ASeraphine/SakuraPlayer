@@ -193,6 +193,7 @@ jobs:
         run: |
           mkdir dist\SakuraPlayer
           copy dist\SakuraPlayer.exe dist\SakuraPlayer\
+          copy SakuraPlayer.jar dist\SakuraPlayer\
           xcopy /E /I runtime dist\SakuraPlayer\runtime
           del dist\SakuraPlayer.exe
           
