@@ -37,12 +37,12 @@ jobs:
       - name: Build JAR
         run: |
           # Compile Java sources
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:lib/jflac-codec-1.5.2.jar:src" src/*.java -d bin
 
           # Create executable JAR with Main-Class and Class-Path manifest
           cd bin
           echo "Main-Class: App" > manifest.txt
-          echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" >> manifest.txt
+          echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar jflac-codec-1.5.2.jar" >> manifest.txt
           jar cvfm ../SakuraPlayer.jar manifest.txt *.class
           cd ..
           rm -f bin/manifest.txt
@@ -143,13 +143,13 @@ jobs:
         run: |
           @echo off
           echo Compiling Java sources...
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar;lib/batik-all-1.19.jar;lib/svg-salamander-1.1.5.3.jar;lib/jlayer-1.0.1.jar;lib/mp3agic-0.9.0.jar;src" src/*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar;lib/batik-all-1.19.jar;lib/svg-salamander-1.1.5.3.jar;lib/jlayer-1.0.1.jar;lib/mp3agic-0.9.0.jar;lib/jflac-codec-1.5.2.jar;src" src/*.java -d bin
           if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           
           echo Creating JAR...
           cd bin
           echo Main-Class: App > manifest.txt
-          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar >> manifest.txt
+          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar jflac-codec-1.5.2.jar >> manifest.txt
           jar cvfm ..\SakuraPlayer.jar manifest.txt *.class
           if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           cd ..
@@ -213,6 +213,7 @@ jobs:
           copy lib\svg-salamander-1.1.5.3.jar dist\SakuraPlayer\
           copy lib\jlayer-1.0.1.jar dist\SakuraPlayer\
           copy lib\mp3agic-0.9.0.jar dist\SakuraPlayer\
+          copy lib\jflac-codec-1.5.2.jar dist\SakuraPlayer\
           
           :: Create debug .bat that shows errors
           echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
@@ -227,7 +228,7 @@ jobs:
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo Running: "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\java" --enable-native-access=javafx.graphics -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo "%%~dp0runtime\bin\java" --enable-native-access=javafx.graphics,javafx.media -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo App closed. Press any key to exit. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo pause >> dist\SakuraPlayer\SakuraPlayer.bat

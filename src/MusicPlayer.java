@@ -1,5 +1,11 @@
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.URI;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.media.Media;
@@ -21,6 +27,7 @@ public class MusicPlayer {
 
     private MediaPlayer mediaPlayer;
     private File currentSongFile;
+    private File tempWavFile; // For FLAC-to-WAV conversion
     private boolean isPlaying = false;
     private double savedPosition = 0.0;
 
@@ -43,6 +50,11 @@ public class MusicPlayer {
             mediaPlayer.dispose();
             mediaPlayer = null;
         }
+        // Clean up previous temp WAV file
+        if (tempWavFile != null) {
+            tempWavFile.delete();
+            tempWavFile = null;
+        }
         // Always create on the JavaFX thread via Platform.runLater
         Platform.runLater(() -> createMediaPlayer());
     }
@@ -54,11 +66,65 @@ public class MusicPlayer {
         Platform.runLater(() -> createMediaPlayer());
     }
     
+    /**
+     * Converts a FLAC file to a temporary WAV file using javax.sound.sampled.
+     * Returns the WAV file, or null if conversion fails.
+     */
+    private File convertFlacToWav(File flacFile) {
+        try {
+            // Read the FLAC file using the jflac-codec SPI
+            AudioInputStream flacStream = AudioSystem.getAudioInputStream(flacFile);
+            AudioFormat baseFormat = flacStream.getFormat();
+            
+            // Convert to PCM signed 16-bit (WAV format)
+            AudioFormat pcmFormat = new AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                baseFormat.getSampleRate(),
+                16,
+                baseFormat.getChannels(),
+                baseFormat.getChannels() * 2,
+                baseFormat.getSampleRate(),
+                false
+            );
+            
+            AudioInputStream pcmStream = AudioSystem.getAudioInputStream(pcmFormat, flacStream);
+            
+            // Write to a temporary WAV file
+            File wavFile = File.createTempFile("sakuraplayer_", ".wav");
+            wavFile.deleteOnExit();
+            AudioSystem.write(pcmStream, AudioFileFormat.Type.WAVE, wavFile);
+            
+            pcmStream.close();
+            flacStream.close();
+            
+            return wavFile;
+        } catch (Exception e) {
+            System.err.println("Failed to convert FLAC to WAV: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     // This must be called on the JavaFX thread
     private void createMediaPlayer() {
         try {
+            File fileToPlay = currentSongFile;
+            
+            // Check if this is a FLAC file - JavaFX doesn't support FLAC natively
+            String name = currentSongFile.getName().toLowerCase();
+            if (name.endsWith(".flac")) {
+                File wavFile = convertFlacToWav(currentSongFile);
+                if (wavFile != null) {
+                    fileToPlay = wavFile;
+                    tempWavFile = wavFile;
+                } else {
+                    System.err.println("Could not convert FLAC file: " + currentSongFile.getName());
+                    return;
+                }
+            }
+            
             // Fix JavaFX URI bug - use proper URI encoding
-            URI fileUri = currentSongFile.toURI();
+            URI fileUri = fileToPlay.toURI();
             String uri = fileUri.toString();
             
             // Better URI encoding - handle all special characters
@@ -125,6 +191,11 @@ public class MusicPlayer {
         mediaPlayer = null;
         isPlaying = false;
         savedPosition = 0.0;
+        // Clean up temp WAV file
+        if (tempWavFile != null) {
+            tempWavFile.delete();
+            tempWavFile = null;
+        }
     }
 
     public boolean isPlaying() { 
