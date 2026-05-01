@@ -148,7 +148,6 @@ jobs:
           # Download Launch4j from sourceforge
           curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
           Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
-          # Move contents to C:\launch4j (handles nested folder from zip)
           if (Test-Path "C:\launch4j-temp\launch4j") {
             Move-Item "C:\launch4j-temp\launch4j\*" "C:\launch4j\" -Force
           } else {
@@ -201,11 +200,17 @@ jobs:
           C:\launch4j\launch4jc.exe launch4j.xml
         shell: cmd
       
-      - name: Upload Windows .exe as artifact
+      - name: Create launcher batch file
+        run: |
+          echo @echo off > dist\SakuraPlayer.bat
+          echo start "" javaw --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
+        shell: cmd
+      
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Sakura-Player-Windows
-          path: dist/*.exe
+          path: dist/
           retention-days: 1
 
   # ============================================
@@ -285,4 +290,3 @@ jobs:
             - **JAR**: Java 25+ with JavaFX 25
           files: release-files/*
           generate_release_notes: true
-
