@@ -126,10 +126,10 @@ jobs:
           retention-days: 1
 
   # ============================================
-  # Build Windows Portable App (bundled JRE)
+  # Build Windows .exe with bundled JRE
   # ============================================
   build-windows:
-    name: Build Windows Portable
+    name: Build Windows .exe
     runs-on: windows-latest
     needs: build-jar
     
@@ -142,6 +142,19 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
+      
+      - name: Install Launch4j
+        run: |
+          curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
+          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
+          if (Test-Path "C:\launch4j-temp\launch4j") {
+            Move-Item "C:\launch4j-temp\launch4j\*" "C:\launch4j\" -Force
+          } else {
+            Move-Item "C:\launch4j-temp\*" "C:\launch4j\" -Force
+          }
+          Remove-Item -Recurse -Force C:\launch4j-temp
+          echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: pwsh
       
       - name: Download fat JAR from build-jar job
         uses: actions/download-artifact@v4
@@ -163,29 +176,30 @@ jobs:
             --output runtime
         shell: cmd
       
-      - name: Create portable app folder
+      - name: Build .exe with Launch4j (bundled JRE)
         run: |
+          mkdir input
           mkdir dist
-          mkdir dist\SakuraPlayer
-          
-          copy SakuraPlayer.jar dist\SakuraPlayer\
-          xcopy /E /I runtime dist\SakuraPlayer\runtime
-          
-          echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
-          echo title SakuraPlayer >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\javaw" -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
-          
-          echo Done creating portable app
+          copy SakuraPlayer.jar input\
+          C:\launch4j\launch4jc.exe launch4j.xml
         shell: cmd
       
-      - name: Create portable ZIP
+      - name: Create distribution folder
+        run: |
+          mkdir dist\SakuraPlayer
+          copy dist\SakuraPlayer.exe dist\SakuraPlayer\
+          xcopy /E /I runtime dist\SakuraPlayer\runtime
+          del dist\SakuraPlayer.exe
+        shell: cmd
+      
+      - name: Create distribution ZIP
         run: |
           cd dist
           tar -a -c -f SakuraPlayer-Windows.zip SakuraPlayer
           cd ..
         shell: cmd
       
-      - name: Upload Windows portable ZIP as artifact
+      - name: Upload Windows ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
           name: Sakura-Player-Windows
@@ -256,7 +270,7 @@ jobs:
             **Windows:**
             1. Download `SakuraPlayer-Windows.zip`
             2. Extract the ZIP to any folder
-            3. Double-click `SakuraPlayer.bat` to launch
+            3. Double-click `SakuraPlayer.exe` to launch
             4. **No separate Java installation needed!**
             
             **JAR (any OS):**
