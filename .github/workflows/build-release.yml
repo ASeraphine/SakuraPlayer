@@ -203,7 +203,17 @@ jobs:
       - name: Create launcher batch file
         run: |
           echo @echo off > dist\SakuraPlayer.bat
-          echo start "" javaw --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
+          echo echo SakuraPlayer is starting... >> dist\SakuraPlayer.bat
+          echo echo If nothing appears, check that Java 25+ is installed and in your PATH. >> dist\SakuraPlayer.bat
+          echo echo. >> dist\SakuraPlayer.bat
+          echo java --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
+          echo if errorlevel 1 ( >> dist\SakuraPlayer.bat
+          echo   echo. >> dist\SakuraPlayer.bat
+          echo   echo ERROR: SakuraPlayer failed to start. >> dist\SakuraPlayer.bat
+          echo   echo Make sure you have Java 25+ installed. >> dist\SakuraPlayer.bat
+          echo   echo Download from: https://adoptium.net/ >> dist\SakuraPlayer.bat
+          echo   pause >> dist\SakuraPlayer.bat
+          echo ) >> dist\SakuraPlayer.bat
         shell: cmd
       
       - name: Upload Windows artifacts
