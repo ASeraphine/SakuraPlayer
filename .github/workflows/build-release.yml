@@ -147,7 +147,14 @@ jobs:
         run: |
           # Download Launch4j from sourceforge
           curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j
+          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
+          # Move contents to C:\launch4j (handles nested folder from zip)
+          if (Test-Path "C:\launch4j-temp\launch4j") {
+            Move-Item "C:\launch4j-temp\launch4j\*" "C:\launch4j\" -Force
+          } else {
+            Move-Item "C:\launch4j-temp\*" "C:\launch4j\" -Force
+          }
+          Remove-Item -Recurse -Force C:\launch4j-temp
           echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
       
@@ -172,25 +179,26 @@ jobs:
       - name: Prepare input directory for Launch4j
         run: |
           mkdir input
+          mkdir input\lib
           copy SakuraPlayer.jar input\
-          copy lib\jaudiotagger-3.0.1.jar input\
-          copy lib\batik-all-1.19.jar input\
-          copy lib\svg-salamander-1.1.5.3.jar input\
-          copy lib\jlayer-1.0.1.jar input\
-          copy lib\mp3agic-0.9.0.jar input\
-          copy lib\javafx.base.jar input\
-          copy lib\javafx.controls.jar input\
-          copy lib\javafx.graphics.jar input\
-          copy lib\javafx.media.jar input\
-          copy lib\javafx.swing.jar input\
-          copy lib\javafx.fxml.jar input\
-          copy lib\javafx.web.jar input\
+          copy lib\jaudiotagger-3.0.1.jar input\lib\
+          copy lib\batik-all-1.19.jar input\lib\
+          copy lib\svg-salamander-1.1.5.3.jar input\lib\
+          copy lib\jlayer-1.0.1.jar input\lib\
+          copy lib\mp3agic-0.9.0.jar input\lib\
+          copy lib\javafx.base.jar input\lib\
+          copy lib\javafx.controls.jar input\lib\
+          copy lib\javafx.graphics.jar input\lib\
+          copy lib\javafx.media.jar input\lib\
+          copy lib\javafx.swing.jar input\lib\
+          copy lib\javafx.fxml.jar input\lib\
+          copy lib\javafx.web.jar input\lib\
         shell: cmd
       
       - name: Build .exe with Launch4j
         run: |
           mkdir dist
-          launch4jc.exe launch4j.xml
+          C:\launch4j\launch4jc.exe launch4j.xml
         shell: cmd
       
       - name: Upload Windows .exe as artifact
