@@ -126,10 +126,10 @@ jobs:
           retention-days: 1
 
   # ============================================
-  # Build Windows Installer (bundled JRE)
+  # Build Windows Portable App (bundled JRE)
   # ============================================
   build-windows:
-    name: Build Windows Installer
+    name: Build Windows Portable
     runs-on: windows-latest
     needs: build-jar
     
@@ -151,10 +151,8 @@ jobs:
       
       - name: Create custom JRE with jlink
         run: |
-          # Find the JDK home (set by setup-java)
           echo "JAVA_HOME: %JAVA_HOME%"
           
-          # Create a custom runtime image with only the modules we need
           "%JAVA_HOME%\bin\jlink" ^
             --module-path "%JAVA_HOME%\jmods";lib ^
             --add-modules java.base,java.logging,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web ^
@@ -165,33 +163,51 @@ jobs:
             --output runtime
         shell: cmd
       
-      - name: Create Windows installer with jpackage
+      - name: Create portable app folder
         run: |
           mkdir dist
+          mkdir dist\SakuraPlayer
           
-          "%JAVA_HOME%\bin\jpackage" ^
-            --type exe ^
-            --input . ^
-            --main-jar SakuraPlayer.jar ^
-            --main-class App ^
-            --runtime-image runtime ^
-            --name "SakuraPlayer" ^
-            --app-version 1.1 ^
-            --description "SakuraPlayer Music Player" ^
-            --vendor "SakuraPlayer" ^
-            --icon res\icon.ico ^
-            --dest dist ^
-            --win-dir-chooser ^
-            --win-menu ^
-            --win-shortcut ^
-            --verbose
+          # Copy the custom JRE
+          xcopy /E /I runtime dist\SakuraPlayer\runtime
+          
+          # Copy the JAR
+          copy SakuraPlayer.jar dist\SakuraPlayer\
+          
+          # Copy resources
+          xcopy /E /I res dist\SakuraPlayer\res
+          
+          # Create launcher batch file
+          echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
+          echo title SakuraPlayer >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo SakuraPlayer is starting... >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo "%%~dp0runtime\bin\java" -Duser.dir=%%~dp0 -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo if errorlevel 1 ( >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo   echo. >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo   echo ERROR: SakuraPlayer failed to start. >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo   pause >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo ) >> dist\SakuraPlayer\SakuraPlayer.bat
+          
+          # Create a VBS script to run without console window
+          echo Set WshShell = CreateObject("WScript.Shell") > dist\SakuraPlayer\SakuraPlayer.vbs
+          echo WshShell.Run chr(34) ^& "%%~dp0runtime\bin\javaw" ^& chr(34) ^& " -Duser.dir=" ^& chr(34) ^& "%%~dp0" ^& chr(34) ^& " -jar " ^& chr(34) ^& "%%~dp0SakuraPlayer.jar" ^& chr(34), 0, False >> dist\SakuraPlayer\SakuraPlayer.vbs
+          
+          echo Done creating portable app
         shell: cmd
       
-      - name: Upload Windows installer as artifact
+      - name: Create portable ZIP
+        run: |
+          cd dist
+          tar -a -c -f SakuraPlayer-Windows.zip SakuraPlayer
+          cd ..
+        shell: cmd
+      
+      - name: Upload Windows portable ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
           name: Sakura-Player-Windows
-          path: dist/SakuraPlayer-*.exe
+          path: dist/SakuraPlayer-Windows.zip
           retention-days: 1
 
   # ============================================
@@ -243,7 +259,7 @@ jobs:
             - Requires macOS 13+ (Apple Silicon or Intel)
             
             **🪟 Windows**
-            - `SakuraPlayer-1.1.exe` — Installer with bundled Java, no separate Java installation needed
+            - `SakuraPlayer-Windows.zip` — Portable app with bundled Java, just unzip and run
             
             **📦 Cross-Platform**
             - `SakuraPlayer.jar` — Run with `java -jar SakuraPlayer.jar` (requires Java 25+)
@@ -256,9 +272,9 @@ jobs:
             3. Right-click → Open (first time only)
             
             **Windows:**
-            1. Download `SakuraPlayer-1.1.exe`
-            2. Run the installer — it will install SakuraPlayer with a bundled Java runtime
-            3. Launch from Start Menu or desktop shortcut
+            1. Download `SakuraPlayer-Windows.zip`
+            2. Extract the ZIP to any folder
+            3. Double-click `SakuraPlayer.bat` to launch
             4. **No separate Java installation needed!**
             
             **JAR (any OS):**
