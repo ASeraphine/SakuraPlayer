@@ -157,23 +157,11 @@ jobs:
           echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
       
-      - name: Build JAR
-        run: |
-          # Compile Java sources
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
-
-          # Create executable JAR with Class-Path manifest
-          cd bin
-          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
-          jar cvfm ..\SakuraPlayer.jar ..\manifest.txt *.class
-          cd ..
-          del manifest.txt
-          
-          # Bundle resources into the JAR
-          cd res
-          jar uf ..\SakuraPlayer.jar .
-          cd ..
-        shell: cmd
+      - name: Download fat JAR from build-jar job
+        uses: actions/download-artifact@v4
+        with:
+          name: SakuraPlayer.jar
+          path: .
       
       - name: Prepare input directory for Launch4j
         run: |
@@ -204,7 +192,6 @@ jobs:
         run: |
           echo @echo off > dist\SakuraPlayer.bat
           echo echo SakuraPlayer is starting... >> dist\SakuraPlayer.bat
-          echo echo If nothing appears, check that Java 25+ is installed and in your PATH. >> dist\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer.bat
           echo java --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir=%%~dp0 -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
           echo if errorlevel 1 ( >> dist\SakuraPlayer.bat
@@ -216,11 +203,36 @@ jobs:
           echo ) >> dist\SakuraPlayer.bat
         shell: cmd
       
+      - name: Create Windows distribution ZIP
+        run: |
+          mkdir sakuraplayer-windows
+          copy dist\SakuraPlayer.exe sakuraplayer-windows\
+          copy dist\SakuraPlayer.bat sakuraplayer-windows\
+          copy SakuraPlayer.jar sakuraplayer-windows\
+          mkdir sakuraplayer-windows\lib
+          copy lib\javafx.base.jar sakuraplayer-windows\lib\
+          copy lib\javafx.controls.jar sakuraplayer-windows\lib\
+          copy lib\javafx.graphics.jar sakuraplayer-windows\lib\
+          copy lib\javafx.media.jar sakuraplayer-windows\lib\
+          copy lib\javafx.swing.jar sakuraplayer-windows\lib\
+          copy lib\javafx.fxml.jar sakuraplayer-windows\lib\
+          copy lib\javafx.web.jar sakuraplayer-windows\lib\
+          copy lib\jaudiotagger-3.0.1.jar sakuraplayer-windows\lib\
+          copy lib\batik-all-1.19.jar sakuraplayer-windows\lib\
+          copy lib\svg-salamander-1.1.5.3.jar sakuraplayer-windows\lib\
+          copy lib\jlayer-1.0.1.jar sakuraplayer-windows\lib\
+          copy lib\mp3agic-0.9.0.jar sakuraplayer-windows\lib\
+          cd sakuraplayer-windows
+          tar -a -c -f ..\dist\SakuraPlayer-Windows.zip *
+          cd ..
+          rmdir /s /q sakuraplayer-windows
+        shell: cmd
+      
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Sakura-Player-Windows
-          path: dist/
+          path: dist/SakuraPlayer-Windows.zip
           retention-days: 1
 
   # ============================================
