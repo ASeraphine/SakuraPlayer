@@ -173,7 +173,7 @@ jobs:
           
           echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
           echo title SakuraPlayer >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo start "" "%%~dp0runtime\bin\javaw" -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo "%%~dp0runtime\bin\javaw" -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           
           echo Done creating portable app
         shell: cmd
