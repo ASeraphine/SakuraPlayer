@@ -15,7 +15,7 @@ A beautiful music player built with **Java** and **JavaFX**, featuring a sleek c
 
 ## 📸 Screenshots
 
-![Player UI](res/SakuraPlayer-image.svg)
+![Player UI](res/SakuraPlayer-image.png)
 
 ## 🚀 Download
 
