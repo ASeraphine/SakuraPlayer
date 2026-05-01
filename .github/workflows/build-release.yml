@@ -206,7 +206,7 @@ jobs:
           echo echo SakuraPlayer is starting... >> dist\SakuraPlayer.bat
           echo echo If nothing appears, check that Java 25+ is installed and in your PATH. >> dist\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer.bat
-          echo java --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
+          echo java --module-path "%%~dp0lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -Duser.dir=%%~dp0 -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer.bat
           echo if errorlevel 1 ( >> dist\SakuraPlayer.bat
           echo   echo. >> dist\SakuraPlayer.bat
           echo   echo ERROR: SakuraPlayer failed to start. >> dist\SakuraPlayer.bat
