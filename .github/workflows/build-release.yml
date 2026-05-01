@@ -167,12 +167,22 @@ jobs:
           if %ERRORLEVEL% neq 0 echo WARNING: App.class not found in JAR!
         shell: cmd
       
+      - name: Download JavaFX Windows SDK for native libraries
+        run: |
+          echo Downloading JavaFX 25 Windows SDK...
+          curl -L -o javafx-sdk.zip "https://download2.gluonhq.com/openjfx/25.0.3/openjfx-25.0.3_windows-x64_bin-sdk.zip"
+          echo Extracting...
+          tar -xf javafx-sdk.zip
+          echo JavaFX SDK extracted to: javafx-sdk-25.0.3
+          dir javafx-sdk-25.0.3\lib
+        shell: cmd
+      
       - name: Create custom JRE with jlink
         run: |
           echo "JAVA_HOME: %JAVA_HOME%"
           
           "%JAVA_HOME%\bin\jlink" ^
-            --module-path "%JAVA_HOME%\jmods";lib ^
+            --module-path "%JAVA_HOME%\jmods";lib;javafx-sdk-25.0.3\lib ^
             --add-modules java.base,java.logging,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web ^
             --strip-debug ^
             --no-header-files ^
@@ -217,7 +227,7 @@ jobs:
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo Running: "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
+          echo "%%~dp0runtime\bin\java" --enable-native-access=javafx.graphics -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo echo App closed. Press any key to exit. >> dist\SakuraPlayer\SakuraPlayer.bat
           echo pause >> dist\SakuraPlayer\SakuraPlayer.bat
