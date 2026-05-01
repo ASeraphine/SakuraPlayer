@@ -23,9 +23,19 @@ jobs:
         run: |
           # Download Launch4j from sourceforge
           curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j
+          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
+          # Move contents to C:\launch4j (handles nested folder from zip)
+          move C:\launch4j-temp\launch4j C:\launch4j\
+          if not exist C:\launch4j\launch4jc.exe (
+            move C:\launch4j-temp\* C:\launch4j\
+          )
           echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
+      
+      - name: Debug - Check Launch4j installation
+        run: |
+          dir C:\launch4j\*.exe
+        shell: cmd
       
       - name: Build JAR
         run: |
