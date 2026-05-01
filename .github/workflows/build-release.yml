@@ -141,25 +141,30 @@ jobs:
       
       - name: Build JAR on Windows
         run: |
-          # Compile Java sources
+          @echo off
+          echo Compiling Java sources...
           javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar;lib/batik-all-1.19.jar;lib/svg-salamander-1.1.5.3.jar;lib/jlayer-1.0.1.jar;lib/mp3agic-0.9.0.jar;src" src/*.java -d bin
-
-          # Create executable JAR with Main-Class and Class-Path manifest
+          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+          
+          echo Creating JAR...
           cd bin
           echo Main-Class: App > manifest.txt
           echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar >> manifest.txt
           jar cvfm ..\SakuraPlayer.jar manifest.txt *.class
+          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           cd ..
           del bin\manifest.txt
           
-          # Bundle resources into the JAR
+          echo Bundling resources...
           cd res
           jar uf ..\SakuraPlayer.jar .
+          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           cd ..
           
-          :: Verify JAR
+          echo Verifying JAR...
           dir SakuraPlayer.jar
           jar tf SakuraPlayer.jar | find "App.class"
+          if %ERRORLEVEL% neq 0 echo WARNING: App.class not found in JAR!
         shell: cmd
       
       - name: Create custom JRE with jlink
@@ -219,9 +224,9 @@ jobs:
       
       - name: Create distribution ZIP
         run: |
-          cd dist
-          tar -a -c -f SakuraPlayer-Windows.zip SakuraPlayer
-          cd ..
+          cd dist\SakuraPlayer
+          tar -a -c -f ..\SakuraPlayer-Windows.zip *
+          cd ..\..
         shell: cmd
       
       - name: Upload Windows ZIP as artifact
