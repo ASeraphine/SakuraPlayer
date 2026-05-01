@@ -168,30 +168,12 @@ jobs:
           mkdir dist
           mkdir dist\SakuraPlayer
           
-          # Copy the custom JRE
+          copy SakuraPlayer.jar dist\SakuraPlayer\
           xcopy /E /I runtime dist\SakuraPlayer\runtime
           
-          # Copy the JAR
-          copy SakuraPlayer.jar dist\SakuraPlayer\
-          
-          # Copy resources
-          xcopy /E /I res dist\SakuraPlayer\res
-          
-          # Create launcher batch file
           echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
           echo title SakuraPlayer >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo SakuraPlayer is starting... >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\java" -Duser.dir=%%~dp0 -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo if errorlevel 1 ( >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo   echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo   echo ERROR: SakuraPlayer failed to start. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo   pause >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo ) >> dist\SakuraPlayer\SakuraPlayer.bat
-          
-          # Create a VBS script to run without console window
-          echo Set WshShell = CreateObject("WScript.Shell") > dist\SakuraPlayer\SakuraPlayer.vbs
-          echo WshShell.Run chr(34) ^& "%%~dp0runtime\bin\javaw" ^& chr(34) ^& " -Duser.dir=" ^& chr(34) ^& "%%~dp0" ^& chr(34) ^& " -jar " ^& chr(34) ^& "%%~dp0SakuraPlayer.jar" ^& chr(34), 0, False >> dist\SakuraPlayer\SakuraPlayer.vbs
+          echo start "" "%%~dp0runtime\bin\javaw" -Duser.dir="%%~dp0" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
           
           echo Done creating portable app
         shell: cmd
