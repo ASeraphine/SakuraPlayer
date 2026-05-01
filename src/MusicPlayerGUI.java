@@ -205,8 +205,8 @@ public class MusicPlayerGUI extends JFrame {
         titleBar.add(titleLabel);
 
         // add custom close and minimize buttons to title bar
-        titleBar.add(createSvgButton("res/Exit2.svg", 10, 8, e -> System.exit(0)));
-        titleBar.add(createSvgButton("res/Minimize2.svg", 30, 8, e -> setState(Frame.ICONIFIED)));
+        titleBar.add(createClickableIcon("res/Exit2.svg", 10, 8, () -> System.exit(0)));
+        titleBar.add(createClickableIcon("res/Minimize2.svg", 30, 8, () -> setState(Frame.ICONIFIED)));
 
         // Make window draggable via title bar
         Point mousePoint = new Point();
@@ -283,7 +283,7 @@ public class MusicPlayerGUI extends JFrame {
         contentPane.add(musicBar);
 
          // Playback Control Buttons
-        musicBar.add(createSvgButton("res/Back2.svg", 80, 40, e -> playPrevious()));
+        musicBar.add(createClickableIcon("res/Back2.svg", 80, 40, () -> playPrevious()));
 
         // Single Play/Pause toggle button
         playPauseButton = createSvgButton("res/Play2.svg", 142, 40, null);
@@ -654,16 +654,44 @@ public class MusicPlayerGUI extends JFrame {
         return new ImageIcon(img);
     }
 
-    private JButton createSvgButton(String svgPath, int x, int y, ActionListener action) {
+    /**
+     * Creates a clickable icon using JLabel instead of JButton.
+     * JLabel has no hover/press/rollover states, so it won't flicker.
+     */
+    private JLabel createClickableIcon(String svgPath, int x, int y, Runnable action) {
         SVGIcon icon = new SVGIcon();
         try {
-            // Strip "res/" prefix if present since resources are at JAR root
             String resourcePath = svgPath.startsWith("res/") ? svgPath.substring(4) : svgPath;
             icon.setSvgURI(getClass().getResource("/" + resourcePath).toURI());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // Cache the SVG as a rasterized ImageIcon to prevent flickering
+        ImageIcon cachedIcon = renderSvgToImage(icon);
+        JLabel label = new JLabel(cachedIcon != null ? cachedIcon : icon);
+        label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+        if (action != null) {
+            label.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    action.run();
+                }
+            });
+        }
+        return label;
+    }
+
+    /**
+     * Creates a JButton with a cached SVG icon.
+     * Uses rasterized ImageIcon to prevent flickering from SVG repaints.
+     */
+    private JButton createSvgButton(String svgPath, int x, int y, ActionListener action) {
+        SVGIcon icon = new SVGIcon();
+        try {
+            String resourcePath = svgPath.startsWith("res/") ? svgPath.substring(4) : svgPath;
+            icon.setSvgURI(getClass().getResource("/" + resourcePath).toURI());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         ImageIcon cachedIcon = renderSvgToImage(icon);
         JButton button = new JButton(cachedIcon != null ? cachedIcon : icon);
         button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
