@@ -45,13 +45,13 @@ cp "$JAVAFX_DIR/lib/javafx.web.jar" javafx-modules/
 
 # Compile Java sources
 echo "[2/6] Compiling source code..."
-javac --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+javac --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
 
 
 # Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo "[3/6] Creating JAR file..."
 cd bin
-echo "Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > "$BASE_DIR/manifest.txt"
+echo "Class-Path: jaudiotagger-3.0.1.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar" > "$BASE_DIR/manifest.txt"
 jar cvfm "$BASE_DIR/SakuraPlayer.jar" "$BASE_DIR/manifest.txt" *.class
 cd "$BASE_DIR"
 rm manifest.txt
@@ -109,8 +109,6 @@ echo "     ✅ Custom runtime created with JavaFX modules"
 # Copy the JAR and non-JavaFX dependency JARs into the input directory
 cp SakuraPlayer.jar input/
 cp lib/jaudiotagger-3.0.1.jar input/
-cp lib/batik-all-1.19.jar input/
-cp lib/svg-salamander-1.1.5.3.jar input/
 cp lib/jlayer-1.0.1.jar input/
 cp lib/mp3agic-0.9.0.jar input/
 
@@ -199,8 +197,6 @@ if [ -f "$LAUNCH4J_JAR" ] && [ -f "$LAUNCH4J_DIR/head/guihead.o" ] && [ -f "$LAU
   
   cp SakuraPlayer.jar input/
   cp lib/jaudiotagger-3.0.1.jar input/
-  cp lib/batik-all-1.19.jar input/
-  cp lib/svg-salamander-1.1.5.3.jar input/
   cp lib/jlayer-1.0.1.jar input/
   cp lib/mp3agic-0.9.0.jar input/
   cp lib/javafx.base.jar input/

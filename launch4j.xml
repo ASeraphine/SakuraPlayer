@@ -19,8 +19,6 @@
   <classPath>
     <mainClass>App</mainClass>
     <cp>lib\jaudiotagger-3.0.1.jar</cp>
-    <cp>lib\batik-all-1.19.jar</cp>
-    <cp>lib\svg-salamander-1.1.5.3.jar</cp>
     <cp>lib\jlayer-1.0.1.jar</cp>
     <cp>lib\mp3agic-0.9.0.jar</cp>
 

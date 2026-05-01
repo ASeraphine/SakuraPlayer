@@ -47,12 +47,12 @@ jobs:
       - name: Build JAR
         run: |
           # Compile Java sources
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
 
           
           # Create executable JAR with Class-Path manifest
           cd bin
-          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
+          echo Class-Path: jaudiotagger-3.0.1.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
           jar cvfm ..\SakuraPlayer.jar ..\manifest.txt *.class
           cd ..
           del manifest.txt
@@ -69,8 +69,6 @@ jobs:
           mkdir input\lib
           copy SakuraPlayer.jar input\
           copy lib\jaudiotagger-3.0.1.jar input\lib\
-          copy lib\batik-all-1.19.jar input\lib\
-          copy lib\svg-salamander-1.1.5.3.jar input\lib\
           copy lib\jlayer-1.0.1.jar input\lib\
           copy lib\mp3agic-0.9.0.jar input\lib\
           copy lib\javafx.base.jar input\lib\

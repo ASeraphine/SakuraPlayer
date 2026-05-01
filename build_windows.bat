@@ -15,13 +15,13 @@ mkdir input
 
 REM Compile Java sources
 echo Compiling source code...
-javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\batik-all-1.19.jar;lib\svg-salamander-1.1.5.3.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
+javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
 
 
 REM Create executable JAR with Class-Path manifest for non-JavaFX dependencies
 echo Creating JAR file...
 cd bin
-echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > "%BASE_DIR%\manifest.txt"
+echo Class-Path: jaudiotagger-3.0.1.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > "%BASE_DIR%\manifest.txt"
 jar cvfm "%BASE_DIR%\SakuraPlayer.jar" "%BASE_DIR%\manifest.txt" *.class
 cd "%BASE_DIR%"
 del manifest.txt
@@ -36,8 +36,6 @@ REM Copy the JAR and all dependency JARs into the input directory
 echo Preparing input directory for Launch4j...
 copy SakuraPlayer.jar input\
 copy lib\jaudiotagger-3.0.1.jar input\
-copy lib\batik-all-1.19.jar input\
-copy lib\svg-salamander-1.1.5.3.jar input\
 copy lib\jlayer-1.0.1.jar input\
 copy lib\mp3agic-0.9.0.jar input\
 copy lib\javafx.base.jar input\

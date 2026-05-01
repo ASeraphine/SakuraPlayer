@@ -28,7 +28,7 @@ jobs:
       - name: Build JAR
         run: |
           # Compile Java sources
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/batik-all-1.19.jar:lib/svg-salamander-1.1.5.3.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
+          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar:lib/jlayer-1.0.1.jar:lib/mp3agic-0.9.0.jar:src" src/*.java -d bin
 
           
           # Create executable JAR with Main-Class manifest
@@ -43,7 +43,7 @@ jobs:
           
           # Create a fat JAR by extracting and repackaging all non-JavaFX dependency JARs
           mkdir -p temp-lib
-          for jar in lib/jaudiotagger-3.0.1.jar lib/batik-all-1.19.jar lib/svg-salamander-1.1.5.3.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
+          for jar in lib/jaudiotagger-3.0.1.jar lib/jlayer-1.0.1.jar lib/mp3agic-0.9.0.jar; do
             cd temp-lib
             jar xf ../$jar
             cd ..
