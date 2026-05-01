@@ -15,7 +15,7 @@ A beautiful music player built with **Java** and **JavaFX**, featuring a sleek c
 
 ## 📸 Screenshots
 
-![Player UI](res/Background3.svg)
+![Player UI](res/SakuraPlayer-image.svg)
 
 ## 🚀 Download
 
@@ -66,7 +66,6 @@ SakuraPlayer/
 
 - **JavaFX 25** - UI framework
 - **JAudioTagger 3.0.1** - Audio metadata
-- **Batik 1.19** - SVG rendering
 - **SVG Salamander 1.1.5.3** - SVG processing
 - **JLayer 1.0.1** - MP3 decoding
 - **MP3agic 0.9.0** - MP3 metadata
