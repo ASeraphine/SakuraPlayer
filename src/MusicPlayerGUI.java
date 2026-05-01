@@ -293,18 +293,18 @@ public class MusicPlayerGUI extends JFrame {
             try {
                 if (musicPlayer.isPlaying()) {
                     musicPlayer.pause();
-                    // Show PLAY icon when paused
+                    // Show PLAY icon when paused (cached to prevent flickering)
                     SVGIcon playIcon = new SVGIcon();
                     playIcon.setSvgURI(getClass().getResource("/Play2.svg").toURI());
-
-                    playPauseButton.setIcon(playIcon);
+                    ImageIcon cachedPlay = renderSvgToImage(playIcon);
+                    playPauseButton.setIcon(cachedPlay != null ? cachedPlay : playIcon);
                 } else {
                     musicPlayer.resume();
-                    // Show PAUSE icon when playing
+                    // Show PAUSE icon when playing (cached to prevent flickering)
                     SVGIcon pauseIcon = new SVGIcon();
                     pauseIcon.setSvgURI(getClass().getResource("/Pause2.svg").toURI());
-
-                    playPauseButton.setIcon(pauseIcon);
+                    ImageIcon cachedPause = renderSvgToImage(pauseIcon);
+                    playPauseButton.setIcon(cachedPause != null ? cachedPause : pauseIcon);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -638,6 +638,22 @@ public class MusicPlayerGUI extends JFrame {
         }
     }
 
+    /**
+     * Renders an SVGIcon to a BufferedImage for caching.
+     * This prevents flickering by rendering the SVG once and reusing the bitmap.
+     */
+    private ImageIcon renderSvgToImage(SVGIcon svgIcon) {
+        int w = svgIcon.getIconWidth();
+        int h = svgIcon.getIconHeight();
+        if (w <= 0 || h <= 0) return null;
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = img.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        svgIcon.paintIcon(null, g2d, 0, 0);
+        g2d.dispose();
+        return new ImageIcon(img);
+    }
+
     private JButton createSvgButton(String svgPath, int x, int y, ActionListener action) {
         SVGIcon icon = new SVGIcon();
         try {
@@ -647,12 +663,15 @@ public class MusicPlayerGUI extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        JButton button = new JButton(icon);
+        // Cache the SVG as a rasterized ImageIcon to prevent flickering
+        ImageIcon cachedIcon = renderSvgToImage(icon);
+        JButton button = new JButton(cachedIcon != null ? cachedIcon : icon);
         button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
         button.setBorder(null);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
         button.setRolloverEnabled(false);
+        button.setFocusPainted(false);
         if (action != null) {
             button.addActionListener(action);
         }
@@ -720,11 +739,11 @@ public class MusicPlayerGUI extends JFrame {
                 // Load album art from metadata
                 loadAlbumArt(selectedFile);
                 
-                // Update button to pause state
+                // Update button to pause state (cached to prevent flickering)
                 SVGIcon pauseIcon = new SVGIcon();
                 pauseIcon.setSvgURI(getClass().getResource("/Pause2.svg").toURI());
-
-                playPauseButton.setIcon(pauseIcon);
+                ImageIcon cachedPause = renderSvgToImage(pauseIcon);
+                playPauseButton.setIcon(cachedPause != null ? cachedPause : pauseIcon);
 
             }
         } catch (Exception e) {
