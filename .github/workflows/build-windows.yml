@@ -68,7 +68,7 @@ jobs:
       - name: Build .exe with Launch4j
         run: |
           mkdir dist
-          launch4jc.exe launch4j.xml
+          C:\launch4j\launch4jc.exe launch4j.xml
         shell: cmd
       
       - name: Upload .exe as artifact
