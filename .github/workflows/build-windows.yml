@@ -27,7 +27,7 @@ jobs:
       - name: Download JavaFX 25 SDK for Windows
         shell: pwsh
         run: |
-          $javafxDir = "$env:RUNNER_TEMP\tools\javafx-sdk-25.0.3-win"
+          $javafxDir = "$env:RUNNER_TEMP\javafx-sdk-25.0.3-win"
           if (-not (Test-Path $javafxDir)) {
             New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\tools"
             Write-Host "Downloading JavaFX 25 SDK for Windows..."
