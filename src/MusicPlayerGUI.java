@@ -246,6 +246,7 @@ public class MusicPlayerGUI extends JFrame {
 
         contentPane.add(songBar);
 
+        // Music bar background image (just for decoration, no children)
         JPanel musicBar = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -263,12 +264,13 @@ public class MusicPlayerGUI extends JFrame {
         musicBar.setOpaque(false);
         contentPane.add(musicBar);
 
-         // Playback Control Buttons
-        musicBar.add(createClickableIcon("Back2.png", 80, 40, () -> playPrevious()));
+        // Playback Control Buttons — added directly to contentPane (not musicBar)
+        // to avoid parent-child rendering issues with custom-painted panels
+        contentPane.add(createClickableIcon("Back2.png", 34 + 80, 401 + 40, () -> playPrevious()));
 
         // Single Play/Pause toggle button
-        playPauseButton = createPngButton("Play2.png", 142, 40, null);
-        musicBar.add(playPauseButton);
+        playPauseButton = createPngButton("Play2.png", 34 + 142, 401 + 40, null);
+        contentPane.add(playPauseButton);
 
         playPauseButton.addActionListener(e -> {
             try {
@@ -284,10 +286,10 @@ public class MusicPlayerGUI extends JFrame {
             }
         });
 
-        musicBar.add(createPngButton("Next2.png", 190, 40, e -> playNext()));
+        contentPane.add(createPngButton("Next2.png", 34 + 190, 401 + 40, e -> playNext()));
 
         // Shuffle button
-        JButton shuffleButton = createPngButton("Shuffle.png", 44, 46, null);
+        JButton shuffleButton = createPngButton("Shuffle.png", 34 + 44, 401 + 46, null);
         shuffleButton.addActionListener(evt -> {
         shuffleEnabled = !shuffleEnabled;
             if (shuffleEnabled) {
@@ -297,10 +299,10 @@ public class MusicPlayerGUI extends JFrame {
             }
             shuffleButton.repaint();
         });
-        musicBar.add(shuffleButton);
+        contentPane.add(shuffleButton);
 
         // Repeat button
-        JButton repeatButton = createPngButton("Repeat.png", 253, 46, null);
+        JButton repeatButton = createPngButton("Repeat.png", 34 + 253, 401 + 46, null);
         repeatButton.addActionListener(evt -> {
             repeatEnabled = !repeatEnabled;
             if (repeatEnabled) {
@@ -310,11 +312,11 @@ public class MusicPlayerGUI extends JFrame {
             }
             repeatButton.repaint();
         });
-        musicBar.add(repeatButton);
+        contentPane.add(repeatButton);
 
         // Progress Slider (seek bar)
         progressSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
-        progressSlider.setBounds(40, 10, 250, 20);
+        progressSlider.setBounds(34 + 40, 401 + 10, 250, 20);
         progressSlider.setOpaque(false);
         progressSlider.setForeground(new Color(178, 95, 116));
         progressSlider.setBackground(new Color(255, 200, 210));
@@ -381,29 +383,26 @@ public class MusicPlayerGUI extends JFrame {
             }
         });
         
-        musicBar.add(progressSlider);
+        contentPane.add(progressSlider);
         
         // Current time label
         currentTimeLabel = new JLabel("0:00");
-        currentTimeLabel.setBounds(40, 30, 40, 15);
+        currentTimeLabel.setBounds(34 + 40, 401 + 30, 40, 15);
         currentTimeLabel.setForeground(new Color(67, 40, 24));
         currentTimeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        musicBar.add(currentTimeLabel);
+        contentPane.add(currentTimeLabel);
         
         // Total time label
         totalTimeLabel = new JLabel("0:00");
-        totalTimeLabel.setBounds(250, 30, 40, 15);
+        totalTimeLabel.setBounds(34 + 250, 401 + 30, 40, 15);
         totalTimeLabel.setForeground(new Color(67, 40, 24));
         totalTimeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
         totalTimeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        musicBar.add(totalTimeLabel);
+        contentPane.add(totalTimeLabel);
         
         // Timer to update slider position while playing
         progressTimer = new Timer(500, e -> updateProgress());
         progressTimer.start();
-        
-        // Force music bar to paint first, slider paints after
-        contentPane.setComponentZOrder(musicBar, 1);
 
         JPanel verticalBar = new JPanel() {
             @Override
