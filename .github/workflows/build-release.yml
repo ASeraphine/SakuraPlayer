@@ -110,7 +110,7 @@ jobs:
           retention-days: 1
 
   # ============================================
-  # Build Windows .exe with bundled JRE
+  # Build Windows .exe with jpackage (self-contained, like macOS)
   # ============================================
   build-windows:
     name: Build Windows .exe
@@ -126,120 +126,107 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       
-      - name: Install Launch4j
-        run: |
-          curl -L -o launch4j.zip "https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.zip/download"
-          Expand-Archive -Path launch4j.zip -DestinationPath C:\launch4j-temp
-          if (Test-Path "C:\launch4j-temp\launch4j") {
-            Move-Item "C:\launch4j-temp\launch4j\*" "C:\launch4j\" -Force
-          } else {
-            Move-Item "C:\launch4j-temp\*" "C:\launch4j\" -Force
-          }
-          Remove-Item -Recurse -Force C:\launch4j-temp
-          echo "C:\launch4j" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Download JavaFX 25 SDK for Windows
         shell: pwsh
-      
-      - name: Build JAR on Windows
         run: |
-          @echo off
-          echo Compiling Java sources...
-          javac --module-path "lib" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib/jaudiotagger-3.0.1.jar;lib/batik-all-1.19.jar;lib/svg-salamander-1.1.5.3.jar;lib/jlayer-1.0.1.jar;lib/mp3agic-0.9.0.jar;lib/jflac-codec-1.5.2.jar;src" src/*.java -d bin
-          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-          
-          echo Creating JAR...
+          $javafxDir = "$env:RUNNER_TEMP\javafx-sdk-25.0.3-win"
+          if (-not (Test-Path $javafxDir)) {
+            New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\tools"
+            Write-Host "Downloading JavaFX 25 SDK for Windows..."
+            Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/25.0.3/openjfx-25.0.3_windows-x64_bin-sdk.zip" -OutFile "$env:RUNNER_TEMP\javafx25-win.zip"
+            Expand-Archive -Path "$env:RUNNER_TEMP\javafx25-win.zip" -DestinationPath "$env:RUNNER_TEMP\tools" -Force
+            Rename-Item "$env:RUNNER_TEMP\tools\javafx-sdk-25.0.3" "javafx-sdk-25.0.3-win"
+            Remove-Item "$env:RUNNER_TEMP\javafx25-win.zip" -Force
+          }
+          echo "JAVAFX_DIR=$javafxDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      
+      - name: Create javafx-modules directory
+        shell: cmd
+        run: |
+          mkdir javafx-modules
+          copy "%JAVAFX_DIR%\lib\javafx.base.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.controls.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.graphics.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.media.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.swing.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.fxml.jar" javafx-modules\
+          copy "%JAVAFX_DIR%\lib\javafx.web.jar" javafx-modules\
+      
+      - name: Compile Java sources
+        shell: cmd
+        run: |
+          javac --module-path "javafx-modules" --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging -cp "lib\jaudiotagger-3.0.1.jar;lib\jlayer-1.0.1.jar;lib\mp3agic-0.9.0.jar;src" src\*.java -d bin
+      
+      - name: Create JAR
+        shell: cmd
+        run: |
           cd bin
-          echo Main-Class: App > manifest.txt
-          echo Class-Path: jaudiotagger-3.0.1.jar batik-all-1.19.jar svg-salamander-1.1.5.3.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar jflac-codec-1.5.2.jar >> manifest.txt
-          jar cvfm ..\SakuraPlayer.jar manifest.txt *.class
-          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+          echo Class-Path: jaudiotagger-3.0.1.jar jlayer-1.0.1.jar mp3agic-0.9.0.jar > ..\manifest.txt
+          jar cvfm ..\SakuraPlayer.jar ..\manifest.txt *.class
           cd ..
-          del bin\manifest.txt
+          del manifest.txt
           
-          echo Bundling resources...
           cd res
           jar uf ..\SakuraPlayer.jar .
-          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           cd ..
-          
-          echo Verifying JAR...
-          dir SakuraPlayer.jar
-          jar tf SakuraPlayer.jar | find "App.class"
-          if %ERRORLEVEL% neq 0 echo WARNING: App.class not found in JAR!
-        shell: cmd
       
-      - name: Download JavaFX JMOD files for Windows
-        run: |
-          echo Downloading JavaFX 25 Windows JMODs...
-          curl -L -o javafx-jmods.zip "https://download2.gluonhq.com/openjfx/25.0.3/openjfx-25.0.3_windows-x64_bin-jmods.zip"
-          echo Extracting...
-          tar -xf javafx-jmods.zip
-          echo JavaFX JMODs extracted to: javafx-jmods-25.0.3
-          dir javafx-jmods-25.0.3
+      - name: Create custom jlink runtime with JavaFX
         shell: cmd
-      
-      - name: Create custom JRE with jlink
         run: |
-          echo "JAVA_HOME: %JAVA_HOME%"
-          
-          "%JAVA_HOME%\bin\jlink" ^
-            --module-path "%JAVA_HOME%\jmods";javafx-jmods-25.0.3 ^
-            --add-modules java.base,java.logging,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web ^
-            --strip-debug ^
+          jlink ^
+            --module-path "%JAVAFX_DIR%\lib;%JAVA_HOME%\jmods" ^
+            --add-modules javafx.controls,javafx.media,javafx.swing,javafx.fxml,javafx.web,java.logging,java.desktop,java.naming,java.scripting,jdk.unsupported,jdk.crypto.ec ^
+            --output "%RUNNER_TEMP%\custom-runtime" ^
             --no-header-files ^
-            --no-man-pages ^
-            --compress=2 ^
-            --output runtime
-        shell: cmd
+            --no-man-pages
+          
+          copy "%JAVAFX_DIR%\bin\decora_sse.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\fxplugins.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\glass.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\glib-lite.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\gstreamer-lite.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\javafx_font.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\javafx_iio.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\jfxmedia.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\jfxwebkit.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\prism_common.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\prism_d3d.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
+          copy "%JAVAFX_DIR%\bin\prism_sw.dll" "%RUNNER_TEMP%\custom-runtime\bin\"
       
-      - name: Build .exe with Launch4j (bundled JRE)
+      - name: Prepare input directory
+        shell: cmd
         run: |
           mkdir input
-          mkdir dist
           copy SakuraPlayer.jar input\
-          C:\launch4j\launch4jc.exe launch4j.xml
-        shell: cmd
+          copy lib\jaudiotagger-3.0.1.jar input\
+          copy lib\jlayer-1.0.1.jar input\
+          copy lib\mp3agic-0.9.0.jar input\
       
-      - name: Create distribution folder
-        run: |
-          mkdir dist\SakuraPlayer
-          copy dist\SakuraPlayer.exe dist\SakuraPlayer\
-          copy SakuraPlayer.jar dist\SakuraPlayer\
-          xcopy /E /I runtime dist\SakuraPlayer\runtime
-          del dist\SakuraPlayer.exe
-          
-          :: Copy dependency JARs (needed for Class-Path manifest)
-          copy lib\jaudiotagger-3.0.1.jar dist\SakuraPlayer\
-          copy lib\batik-all-1.19.jar dist\SakuraPlayer\
-          copy lib\svg-salamander-1.1.5.3.jar dist\SakuraPlayer\
-          copy lib\jlayer-1.0.1.jar dist\SakuraPlayer\
-          copy lib\mp3agic-0.9.0.jar dist\SakuraPlayer\
-          copy lib\jflac-codec-1.5.2.jar dist\SakuraPlayer\
-          
-          :: Create debug .bat that shows errors
-          echo @echo off > dist\SakuraPlayer\SakuraPlayer.bat
-          echo title SakuraPlayer Debug >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo SakuraPlayer Debug Launcher >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo If the app does not appear, check the error messages above. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo Checking files... >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo if not exist "%%~dp0SakuraPlayer.jar" echo ERROR: SakuraPlayer.jar not found! >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo if not exist "%%~dp0runtime\bin\java.exe" echo ERROR: java.exe not found! >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo Running: "%%~dp0runtime\bin\java" -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo "%%~dp0runtime\bin\java" --enable-native-access=javafx.graphics,javafx.media -jar "%%~dp0SakuraPlayer.jar" >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo echo App closed. Press any key to exit. >> dist\SakuraPlayer\SakuraPlayer.bat
-          echo pause >> dist\SakuraPlayer\SakuraPlayer.bat
+      - name: Build .exe with jpackage
         shell: cmd
+        run: |
+          mkdir dist
+          jpackage ^
+            --type app-image ^
+            --runtime-image "%RUNNER_TEMP%\custom-runtime" ^
+            --input "input" ^
+            --main-jar SakuraPlayer.jar ^
+            --main-class App ^
+            --name "Sakura Player" ^
+            --icon "res\icon.ico" ^
+            --app-version 1.0 ^
+            --vendor "Sakura Player" ^
+            --copyright "Copyright 2026" ^
+            --java-options "-Duser.dir=\\%%APPDIR%%" ^
+            --dest "%CD%\dist"
       
       - name: Create distribution ZIP
-        run: |
-          cd dist\SakuraPlayer
-          tar -a -c -f ..\SakuraPlayer-Windows.zip *
-          cd ..\..
         shell: cmd
+        run: |
+          cd dist
+          ren "Sakura Player" "SakuraPlayer"
+          tar -a -c -f SakuraPlayer-Windows.zip SakuraPlayer
+          cd ..
       
       - name: Upload Windows ZIP as artifact
         uses: actions/upload-artifact@v4
