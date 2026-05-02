@@ -154,6 +154,7 @@ public class MusicPlayerGUI extends JFrame {
         // set layout to null which allows us to control the (x, y) coordinates of our components 
         // and also set the height and width
         contentPane.setLayout(null);
+        contentPane.setOpaque(false);
         setContentPane(contentPane);
         contentPane.setBorder(null);
 
@@ -163,10 +164,6 @@ public class MusicPlayerGUI extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                // Only round the TOP corners (left and right)
-                Shape topRoundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight() + 20, 20, 20);
-                g2d.setClip(topRoundedRect);
         
                 if (titleBarIcon != null) {
                     g2d.drawImage(titleBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
@@ -183,9 +180,6 @@ public class MusicPlayerGUI extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                Shape topRoundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight() + 20, 20, 20);
-                g2d.setClip(topRoundedRect);
         
                 if (horizontalBarIcon != null) {
                     g2d.drawImage(horizontalBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
@@ -231,9 +225,6 @@ public class MusicPlayerGUI extends JFrame {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-                Shape topRoundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight() + 20, 20, 20);
-                g2d.setClip(topRoundedRect);
-        
                 if (songBarIcon != null) {
                     g2d.drawImage(songBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
                 }
@@ -260,9 +251,6 @@ public class MusicPlayerGUI extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                Shape topRoundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight() + 20, 20, 20);
-                g2d.setClip(topRoundedRect);
         
                 if (musicBarIcon != null) {
                     g2d.drawImage(musicBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
@@ -442,9 +430,6 @@ public class MusicPlayerGUI extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                Shape topRoundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight() + 20, 30, 30);
-                g2d.setClip(topRoundedRect);
         
                 if (songListBGIcon != null) {
                     g2d.drawImage(songListBGIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
