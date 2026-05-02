@@ -159,14 +159,37 @@ public class MusicPlayerGUI extends JFrame {
         contentPane.setBorder(null);
 
         // add Title Bar Custom Component
-        JLabel titleBar = new JLabel(titleBarIcon);
+        JPanel titleBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (titleBarIcon != null) {
+                    g2d.drawImage(titleBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         titleBar.setBounds(0, 0, 673, 30);
         titleBar.setLayout(null);
         contentPane.add(titleBar);
 
-        JLabel horizontalBar = new JLabel(horizontalBarIcon);
+        JPanel horizontalBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (horizontalBarIcon != null) {
+                    g2d.drawImage(horizontalBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         horizontalBar.setBounds(-10, 25, 800, 25);
         horizontalBar.setLayout(null);
+        horizontalBar.setOpaque(false);
         contentPane.add(horizontalBar);
 
         // add title label to title bar
@@ -196,9 +219,21 @@ public class MusicPlayerGUI extends JFrame {
         });
 
         // add song bar custom component
-        JLabel songBar = new JLabel(songBarIcon);
+        JPanel songBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (songBarIcon != null) {
+                    g2d.drawImage(songBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         songBar.setBounds(93, 62, 212, 55);
         songBar.setLayout(null);
+        songBar.setOpaque(false);
         // Don't block mouse events for components underneath
         songBar.setEnabled(false);
         // Song Title Display
@@ -211,9 +246,21 @@ public class MusicPlayerGUI extends JFrame {
 
         contentPane.add(songBar);
 
-        JLabel musicBar = new JLabel(musicBarIcon);
+        JPanel musicBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (musicBarIcon != null) {
+                    g2d.drawImage(musicBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         musicBar.setBounds(34, 401, 332, 98);
         musicBar.setLayout(null);
+        musicBar.setOpaque(false);
         contentPane.add(musicBar);
 
          // Playback Control Buttons
@@ -358,17 +405,41 @@ public class MusicPlayerGUI extends JFrame {
         // Force music bar to paint first, slider paints after
         contentPane.setComponentZOrder(musicBar, 1);
 
-        JLabel verticalBar = new JLabel(verticalBarIcon);
+        JPanel verticalBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (verticalBarIcon != null) {
+                    g2d.drawImage(verticalBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         verticalBar.setBounds(398, 0, 3, 700);
         verticalBar.setLayout(null);
+        verticalBar.setOpaque(false);
         contentPane.add(verticalBar);
         contentPane.setComponentZOrder(verticalBar, 1);
         contentPane.setComponentZOrder(titleBar, 2);
 
         // Song List BG Panel
-        JLabel songListBG = new JLabel(songListBGIcon);
+        JPanel songListBG = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (songListBGIcon != null) {
+                    g2d.drawImage(songListBGIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
+            }
+        };
         songListBG.setBounds(417, 66, 234, 450);
         songListBG.setLayout(null);
+        songListBG.setOpaque(false);
         contentPane.add(songListBG);
 
         // Album Art Panel (center area) - plain panel, no background SVG
