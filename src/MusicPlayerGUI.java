@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.awt.geom.RoundRectangle2D;
 import org.jaudiotagger.audio.AudioFile;
@@ -15,6 +16,7 @@ import org.jaudiotagger.tag.Tag;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.awt.image.BufferedImage;
+import com.kitfox.svg.app.beans.SVGIcon;
 
 public class MusicPlayerGUI extends JFrame {
     // color config
@@ -26,7 +28,7 @@ public class MusicPlayerGUI extends JFrame {
     // allow us tto use file explorer to load songs and folders
     private JFileChooser fileChooser;
 
-    private JLabel playPauseButton;
+    private SvgIconComponent playPauseButton;
     private ImageIcon backgroundIcon;
     private ImageIcon titleBarIcon; 
     private ImageIcon songBarIcon;
@@ -48,13 +50,13 @@ public class MusicPlayerGUI extends JFrame {
     private boolean shuffleEnabled = false;
     private boolean repeatEnabled = false;
 
-    // Cache for loaded PNG icons — load once, reuse forever
+    // Cache for loaded SVG icons — load once, reuse forever
     private final java.util.HashMap<String, ImageIcon> iconCache = new java.util.HashMap<>();
 
-    /** Loads a PNG image from the res/png/ directory (or res/ for icon-512.png).
+    /** Loads a pre-rendered PNG icon from the res/png/ directory.
+     *  PNGs have correct backgrounds baked in and look crisp.
      *  Results are cached so each icon is only loaded once. */
     private ImageIcon loadPng(String name) {
-        // Return cached icon if already loaded
         ImageIcon cached = iconCache.get(name);
         if (cached != null) {
             return cached;
@@ -79,7 +81,36 @@ public class MusicPlayerGUI extends JFrame {
                     }
                 }
             }
-            // Cache the result (even if null, to avoid retrying failed loads)
+            iconCache.put(name, icon);
+            return icon;
+        } catch (Exception e) {
+            iconCache.put(name, null);
+            return null;
+        }
+    }
+
+    /** Loads an SVG image from the res/ directory using SVGIcon.
+     *  SVGIcon is svg-salamander's built-in Swing component that handles
+     *  rendering with proper anti-aliasing and alpha handling.
+     *  Results are cached so each SVG is only loaded once. */
+    private ImageIcon loadSvg(String name) {
+        ImageIcon cached = iconCache.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            SVGIcon icon = new SVGIcon();
+            // Try loading from classpath first (works when running from JAR)
+            java.net.URL url = getClass().getResource("/" + name);
+            if (url != null) {
+                icon.setSvgURI(url.toURI());
+            } else {
+                // Fallback: load from filesystem (works when running from VS Code / IDE)
+                File file = new File("res/" + name);
+                if (file.exists()) {
+                    icon.setSvgURI(file.toURI());
+                }
+            }
             iconCache.put(name, icon);
             return icon;
         } catch (Exception e) {
@@ -115,6 +146,7 @@ public class MusicPlayerGUI extends JFrame {
 
         // round the window corners
         setBackground(new Color(0, 0, 0, 0)); // Make background transparent
+        setShape(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 20, 20));
 
         // end process when app is closed 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -125,14 +157,14 @@ public class MusicPlayerGUI extends JFrame {
         // prevent the app from being resized 
         setResizable(false);
 
-        // Load PNG backgrounds
-        backgroundIcon = loadPng("Background3.png");
-        titleBarIcon = loadPng("Title Bar3.png");
-        songBarIcon = loadPng("Rectangle 2.png");
-        musicBarIcon = loadPng("Music Bar.png");
-        verticalBarIcon = loadPng("Line 4.png");
-        songListBGIcon = loadPng("Song List BG.png");
-        horizontalBarIcon = loadPng("Rectangle 5.png");
+        // Load SVG backgrounds
+        backgroundIcon = loadSvg("Background3.svg");
+        titleBarIcon = loadSvg("Title Bar3.svg");
+        songBarIcon = loadSvg("Rectangle 2.svg");
+        musicBarIcon = loadSvg("Music Bar.svg");
+        verticalBarIcon = loadSvg("Line 4.svg");
+        songListBGIcon = loadSvg("Song List BG.svg");
+        horizontalBarIcon = loadSvg("Rectangle 5.svg");
 
         // Create custom content pane that paints the PNG background
         JPanel contentPane = new JPanel() {
@@ -144,6 +176,14 @@ public class MusicPlayerGUI extends JFrame {
                 if (backgroundIcon != null) {
                     g2d.drawImage(backgroundIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
                 }
+                
+                // Draw the music bar directly in the content pane's paintComponent
+                // This ensures it's always drawn BEFORE the icon components,
+                // so the icons will always paint on top of it correctly
+                if (musicBarIcon != null) {
+                    g2d.drawImage(musicBarIcon.getImage(), 34, 401, 332, 98, this);
+                }
+                
                 g2d.dispose();
             }
         };
@@ -197,8 +237,8 @@ public class MusicPlayerGUI extends JFrame {
         titleBar.add(titleLabel);
 
         // add custom close and minimize buttons to title bar
-        titleBar.add(createClickableIcon("Exit2.png", 10, 8, () -> System.exit(0)));
-        titleBar.add(createClickableIcon("Minimize2.png", 30, 8, () -> setState(Frame.ICONIFIED)));
+        titleBar.add(createSvgButton("Exit2.svg", 10, 8, () -> System.exit(0)));
+        titleBar.add(createSvgButton("Minimize2.svg", 30, 8, () -> setState(Frame.ICONIFIED)));
 
         // Make window draggable via title bar
         Point mousePoint = new Point();
@@ -233,52 +273,43 @@ public class MusicPlayerGUI extends JFrame {
         songBar.setOpaque(false);
         // Don't block mouse events for components underneath
         songBar.setEnabled(false);
-        // Song Title Display
-       songTitleLabel = new JLabel("No Song Playing");
-       songTitleLabel.setBounds(105, 70, 190, 30);
-       songTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-       songTitleLabel.setForeground(new Color(255, 224, 232));
-       songTitleLabel.setFont(new Font("PoetsenOne", Font.BOLD, 18));
-       contentPane.add(songTitleLabel);
-
         contentPane.add(songBar);
 
-        // Music bar background image (just for decoration, no children)
-        JPanel musicBar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                if (musicBarIcon != null) {
-                    g2d.drawImage(musicBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
-                }
-                g2d.dispose();
-            }
-        };
-        musicBar.setBounds(34, 401, 332, 98);
-        musicBar.setLayout(null);
-        musicBar.setOpaque(false);
-        contentPane.add(musicBar);
+        // Song Title Display — added as child of songBar so it's always
+        // painted on top of the songBar background, never behind it
+        songTitleLabel = new JLabel("No Song Playing");
+        songTitleLabel.setBounds(12, 8, 190, 30);
+        songTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        songTitleLabel.setForeground(new Color(67, 40, 24));  // Brown text for readability
+        songTitleLabel.setFont(new Font("PoetsenOne", Font.BOLD, 18));
+        songBar.add(songTitleLabel);
+
+        // Music bar is drawn directly in contentPane.paintComponent() above.
+        // No separate musicBar panel needed — it would cause rendering issues
+        // by painting its semi-transparent image on top of the icon components
+        // when repainted independently (e.g., during progress updates).
 
         // Playback Control Buttons — added directly to contentPane (not musicBar)
         // to avoid parent-child rendering issues with custom-painted panels
-        contentPane.add(createClickableIcon("Back2.png", 34 + 80, 401 + 40, () -> playPrevious()));
+        contentPane.add(createSvgButton("Back2.svg", 34 + 80, 401 + 40, () -> playPrevious()));
 
         // Single Play/Pause toggle button
-        playPauseButton = createPngButton("Play2.png", 34 + 142, 401 + 40, null);
+        playPauseButton = createSvgButton("Play2.svg", 34 + 142, 401 + 40, null);
         contentPane.add(playPauseButton);
 
+        // Store the play/pause icon references for swapping
+        ImageIcon playIcon = loadSvg("Play2.svg");
+        ImageIcon pauseIcon = loadSvg("Pause2.svg");
         playPauseButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
                     if (musicPlayer.isPlaying()) {
                         musicPlayer.pause();
-                        playPauseButton.setIcon(loadPng("Play2.png"));
+                        playPauseButton.repaint();
                     } else {
                         musicPlayer.resume();
-                        playPauseButton.setIcon(loadPng("Pause2.png"));
+                        playPauseButton.repaint();
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -286,10 +317,10 @@ public class MusicPlayerGUI extends JFrame {
             }
         });
 
-        contentPane.add(createPngButton("Next2.png", 34 + 190, 401 + 40, () -> playNext()));
+        contentPane.add(createSvgButton("Next2.svg", 34 + 190, 401 + 40, () -> playNext()));
 
         // Shuffle button
-        JLabel shuffleButton = createPngButton("Shuffle.png", 34 + 44, 401 + 46, null);
+        SvgIconComponent shuffleButton = createSvgButton("Shuffle.svg", 34 + 44, 401 + 46, null);
         shuffleButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
@@ -305,7 +336,7 @@ public class MusicPlayerGUI extends JFrame {
         contentPane.add(shuffleButton);
 
         // Repeat button
-        JLabel repeatButton = createPngButton("Repeat.png", 34 + 253, 401 + 46, null);
+        SvgIconComponent repeatButton = createSvgButton("Repeat.svg", 34 + 253, 401 + 46, null);
         repeatButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
@@ -409,23 +440,6 @@ public class MusicPlayerGUI extends JFrame {
         // Timer to update slider position while playing
         progressTimer = new Timer(500, e -> updateProgress());
         progressTimer.start();
-
-        JPanel verticalBar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-                if (verticalBarIcon != null) {
-                    g2d.drawImage(verticalBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
-                }
-                g2d.dispose();
-            }
-        };
-        verticalBar.setBounds(398, 0, 3, 700);
-        verticalBar.setLayout(null);
-        verticalBar.setOpaque(false);
-        contentPane.add(verticalBar);
 
         // Song List BG Panel
         JPanel songListBG = new JPanel() {
@@ -567,34 +581,25 @@ public class MusicPlayerGUI extends JFrame {
         contentPane.add(loadButton);
         
         // ============================================================
-        // Set explicit z-orders for all contentPane children
-        // Higher z-order = paints on top
+        // Vertical bar — added LAST so it paints on top of everything
+        // (Swing paints children in order: last-added = topmost)
         // ============================================================
-        // Get all components to set proper ordering
-        Component[] allChildren = contentPane.getComponents();
-        for (Component c : allChildren) {
-            if (c == loadButton) {
-                contentPane.setComponentZOrder(c, 0);  // bottom
-            } else if (c == horizontalBar) {
-                contentPane.setComponentZOrder(c, 1);
-            } else if (c == titleBar) {
-                contentPane.setComponentZOrder(c, 2);
-            } else if (c == songBar) {
-                contentPane.setComponentZOrder(c, 3);
-            } else if (c == albumPanel) {
-                contentPane.setComponentZOrder(c, 4);
-            } else if (c == songListBG) {
-                contentPane.setComponentZOrder(c, 5);
-            } else if (c == musicBar) {
-                contentPane.setComponentZOrder(c, 6);
-            } else if (c == songTitleLabel) {
-                contentPane.setComponentZOrder(c, 7);
-            } else if (c == verticalBar) {
-                contentPane.setComponentZOrder(c, 99);  // on top of EVERYTHING
-            } else {
-                contentPane.setComponentZOrder(c, 8);  // buttons, slider, labels
+        JPanel verticalBar = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+                if (verticalBarIcon != null) {
+                    g2d.drawImage(verticalBarIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
+                }
+                g2d.dispose();
             }
-        }
+        };
+        verticalBar.setBounds(398, 0, 3, 700);
+        verticalBar.setLayout(null);
+        verticalBar.setOpaque(false);
+        contentPane.add(verticalBar);
     }
 
     private void addToPlaylist(File file) {
@@ -627,49 +632,70 @@ public class MusicPlayerGUI extends JFrame {
     }
 
     /**
-     * Creates a clickable icon using JLabel instead of JButton.
-     * JLabel has no hover/press/rollover states, so it won't flicker.
+     * A custom JComponent that paints an SVG icon using SRC compositing.
+     * SRC compositing means the icon's pixels completely replace the
+     * background pixels, avoiding any alpha blending issues that can
+     * occur with SrcOver when painting on top of semi-transparent areas.
      */
-    private JLabel createClickableIcon(String pngName, int x, int y, Runnable action) {
-        ImageIcon icon = loadPng(pngName);
-        JLabel label = new JLabel(icon);
-        if (icon != null) {
-            label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
-        } else {
-            label.setBounds(x, y, 24, 24);
+    private class SvgIconComponent extends JComponent {
+        private SVGIcon svgIcon;
+        
+        SvgIconComponent(SVGIcon icon) {
+            this.svgIcon = icon;
+            setOpaque(false);
         }
-        if (action != null) {
-            label.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    action.run();
-                }
-            });
+        
+        void setSvgIcon(SVGIcon newIcon) {
+            this.svgIcon = newIcon;
+            repaint();
         }
-        return label;
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (svgIcon != null) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                // Use SrcOver compositing (the default): the icon's opaque pixels
+                // completely cover the background, while transparent pixels let
+                // the background show through naturally
+                g2d.setComposite(AlphaComposite.SrcOver);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                svgIcon.paintIcon(this, g2d, 0, 0);
+                g2d.dispose();
+            }
+        }
     }
 
     /**
-     * Creates a clickable icon using JLabel instead of JButton.
-     * JLabel has no hover/press/rollover states, so it won't flicker or appear translucent.
+     * Creates a clickable SVG icon using SvgIconComponent with SRC compositing.
+     * This ensures the icon's pixels completely replace the background,
+     * avoiding any alpha blending issues with semi-transparent areas.
      */
-    private JLabel createPngButton(String pngName, int x, int y, Runnable action) {
-        ImageIcon icon = loadPng(pngName);
-        JLabel label = new JLabel(icon);
-        if (icon != null) {
-            label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
-        } else {
-            label.setBounds(x, y, 24, 24);
+    private SvgIconComponent createSvgButton(String svgName, int x, int y, Runnable action) {
+        SVGIcon icon = new SVGIcon();
+        try {
+            java.net.URL url = getClass().getResource("/" + svgName);
+            if (url != null) {
+                icon.setSvgURI(url.toURI());
+            } else {
+                File file = new File("res/" + svgName);
+                if (file.exists()) {
+                    icon.setSvgURI(file.toURI());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        SvgIconComponent comp = new SvgIconComponent(icon);
+        comp.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
         if (action != null) {
-            label.addMouseListener(new MouseAdapter() {
+            comp.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     action.run();
                 }
             });
         }
-        return label;
+        return comp;
     }
 
     private void addGuiComponents() {
@@ -731,7 +757,21 @@ public class MusicPlayerGUI extends JFrame {
                 loadAlbumArt(selectedFile);
                 
                 // Update button to pause state
-                playPauseButton.setIcon(loadPng("Pause2.png"));
+                SVGIcon pauseIcon = new SVGIcon();
+                try {
+                    java.net.URL url = getClass().getResource("/Pause2.svg");
+                    if (url != null) {
+                        pauseIcon.setSvgURI(url.toURI());
+                    } else {
+                        File file = new File("res/Pause2.svg");
+                        if (file.exists()) {
+                            pauseIcon.setSvgURI(file.toURI());
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                playPauseButton.setSvgIcon(pauseIcon);
             }
         } catch (Exception e) {
             e.printStackTrace();
