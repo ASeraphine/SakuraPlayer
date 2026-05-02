@@ -36,7 +36,7 @@ jobs:
             Rename-Item "$env:RUNNER_TEMP\tools\javafx-sdk-25.0.3" "javafx-sdk-25.0.3-win"
             Remove-Item "$env:RUNNER_TEMP\javafx25-win.zip" -Force
           }
-          echo "JAVAFX_DIR=$javafxDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Add-Content -Path $env:GITHUB_ENV -Value "JAVAFX_DIR=$javafxDir"
       
       - name: Create javafx-modules directory
         shell: cmd
