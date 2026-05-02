@@ -417,8 +417,6 @@ public class MusicPlayerGUI extends JFrame {
         verticalBar.setLayout(null);
         verticalBar.setOpaque(false);
         contentPane.add(verticalBar);
-        contentPane.setComponentZOrder(verticalBar, 1);
-        contentPane.setComponentZOrder(titleBar, 2);
 
         // Song List BG Panel
         JPanel songListBG = new JPanel() {
@@ -523,9 +521,6 @@ public class MusicPlayerGUI extends JFrame {
             }
         });
 
-        // CORRECT PAINT ORDER (from bottom to top)
-        contentPane.setComponentZOrder(verticalBar, 1);
-
         songListBG.add(scrollPane);
 
         // ✅ Add Load Song / Load Folder Menu at original position
@@ -561,7 +556,34 @@ public class MusicPlayerGUI extends JFrame {
         loadButton.addActionListener(e -> popup.show(loadButton, 0, loadButton.getHeight()));
         
         contentPane.add(loadButton);
-        contentPane.setComponentZOrder(loadButton, 0); 
+        
+        // ============================================================
+        // Set explicit z-orders for all contentPane children
+        // Higher z-order = paints on top
+        // ============================================================
+        // Get all components to set proper ordering
+        Component[] allChildren = contentPane.getComponents();
+        for (Component c : allChildren) {
+            if (c == loadButton) {
+                contentPane.setComponentZOrder(c, 0);  // bottom
+            } else if (c == horizontalBar) {
+                contentPane.setComponentZOrder(c, 1);  // behind verticalBar
+            } else if (c == verticalBar) {
+                contentPane.setComponentZOrder(c, 2);  // on top of horizontalBar
+            } else if (c == titleBar) {
+                contentPane.setComponentZOrder(c, 3);
+            } else if (c == songBar) {
+                contentPane.setComponentZOrder(c, 4);
+            } else if (c == albumPanel) {
+                contentPane.setComponentZOrder(c, 5);
+            } else if (c == songListBG) {
+                contentPane.setComponentZOrder(c, 6);
+            } else if (c == musicBar) {
+                contentPane.setComponentZOrder(c, 7);  // behind buttons
+            } else {
+                contentPane.setComponentZOrder(c, 8);  // buttons, slider, labels on top
+            }
+        }
     }
 
     private void addToPlaylist(File file) {
