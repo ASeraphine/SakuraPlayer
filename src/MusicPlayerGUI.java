@@ -141,9 +141,6 @@ public class MusicPlayerGUI extends JFrame {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                Shape roundedRect = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20);
-                g2d.setClip(roundedRect);
-                
                 if (backgroundIcon != null) {
                     g2d.drawImage(backgroundIcon.getImage(), 0, 0, getWidth(), getHeight(), this);
                 }
