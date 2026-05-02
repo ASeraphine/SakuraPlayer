@@ -51,7 +51,23 @@ public class MusicPlayerGUI extends JFrame {
     /** Loads a PNG image from the res/png/ directory (or res/ for icon-512.png) */
     private ImageIcon loadPng(String name) {
         try {
-            return new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/png/" + name)));
+            // Try loading from classpath first (works when running from JAR)
+            java.net.URL url = getClass().getResource("/png/" + name);
+            if (url != null) {
+                BufferedImage img = ImageIO.read(url);
+                if (img != null) {
+                    return new ImageIcon(img);
+                }
+            }
+            // Fallback: load from filesystem (works when running from VS Code / IDE)
+            File file = new File("res/png/" + name);
+            if (file.exists()) {
+                BufferedImage img = ImageIO.read(file);
+                if (img != null) {
+                    return new ImageIcon(img);
+                }
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -66,7 +82,15 @@ public class MusicPlayerGUI extends JFrame {
 
         // ✅ Custom Application Icon
         try {
-            setIconImage(ImageIO.read(getClass().getResourceAsStream("/icon-512.png")));
+            java.net.URL iconUrl = getClass().getResource("/icon-512.png");
+            if (iconUrl != null) {
+                setIconImage(ImageIO.read(iconUrl));
+            } else {
+                File iconFile = new File("res/icon-512.png");
+                if (iconFile.exists()) {
+                    setIconImage(ImageIO.read(iconFile));
+                }
+            }
         } catch (Exception e) {
             // ignore
         }
@@ -580,7 +604,11 @@ public class MusicPlayerGUI extends JFrame {
     private JLabel createClickableIcon(String pngName, int x, int y, Runnable action) {
         ImageIcon icon = loadPng(pngName);
         JLabel label = new JLabel(icon);
-        label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+        if (icon != null) {
+            label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+        } else {
+            label.setBounds(x, y, 24, 24);
+        }
         if (action != null) {
             label.addMouseListener(new MouseAdapter() {
                 @Override
@@ -598,7 +626,11 @@ public class MusicPlayerGUI extends JFrame {
     private JButton createPngButton(String pngName, int x, int y, ActionListener action) {
         ImageIcon icon = loadPng(pngName);
         JButton button = new JButton(icon);
-        button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+        if (icon != null) {
+            button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+        } else {
+            button.setBounds(x, y, 24, 24);
+        }
         button.setBorder(null);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
