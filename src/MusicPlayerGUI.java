@@ -26,7 +26,7 @@ public class MusicPlayerGUI extends JFrame {
     // allow us tto use file explorer to load songs and folders
     private JFileChooser fileChooser;
 
-    private JButton playPauseButton;
+    private JLabel playPauseButton;
     private ImageIcon backgroundIcon;
     private ImageIcon titleBarIcon; 
     private ImageIcon songBarIcon;
@@ -239,7 +239,7 @@ public class MusicPlayerGUI extends JFrame {
        songTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
        songTitleLabel.setForeground(new Color(255, 224, 232));
        songTitleLabel.setFont(new Font("PoetsenOne", Font.BOLD, 18));
-       add(songTitleLabel);
+       contentPane.add(songTitleLabel);
 
         contentPane.add(songBar);
 
@@ -269,45 +269,54 @@ public class MusicPlayerGUI extends JFrame {
         playPauseButton = createPngButton("Play2.png", 34 + 142, 401 + 40, null);
         contentPane.add(playPauseButton);
 
-        playPauseButton.addActionListener(e -> {
-            try {
-                if (musicPlayer.isPlaying()) {
-                    musicPlayer.pause();
-                    playPauseButton.setIcon(loadPng("Play2.png"));
-                } else {
-                    musicPlayer.resume();
-                    playPauseButton.setIcon(loadPng("Pause2.png"));
+        playPauseButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    if (musicPlayer.isPlaying()) {
+                        musicPlayer.pause();
+                        playPauseButton.setIcon(loadPng("Play2.png"));
+                    } else {
+                        musicPlayer.resume();
+                        playPauseButton.setIcon(loadPng("Pause2.png"));
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
             }
         });
 
-        contentPane.add(createPngButton("Next2.png", 34 + 190, 401 + 40, e -> playNext()));
+        contentPane.add(createPngButton("Next2.png", 34 + 190, 401 + 40, () -> playNext()));
 
         // Shuffle button
-        JButton shuffleButton = createPngButton("Shuffle.png", 34 + 44, 401 + 46, null);
-        shuffleButton.addActionListener(evt -> {
-        shuffleEnabled = !shuffleEnabled;
-            if (shuffleEnabled) {
-                shuffleButton.setBorder(BorderFactory.createLineBorder(new Color(255, 230, 237, 200), 2));
-            } else {
-                shuffleButton.setBorder(null);
+        JLabel shuffleButton = createPngButton("Shuffle.png", 34 + 44, 401 + 46, null);
+        shuffleButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                shuffleEnabled = !shuffleEnabled;
+                if (shuffleEnabled) {
+                    shuffleButton.setBorder(BorderFactory.createLineBorder(new Color(255, 230, 237, 200), 2));
+                } else {
+                    shuffleButton.setBorder(null);
+                }
+                shuffleButton.repaint();
             }
-            shuffleButton.repaint();
         });
         contentPane.add(shuffleButton);
 
         // Repeat button
-        JButton repeatButton = createPngButton("Repeat.png", 34 + 253, 401 + 46, null);
-        repeatButton.addActionListener(evt -> {
-            repeatEnabled = !repeatEnabled;
-            if (repeatEnabled) {
-                repeatButton.setBorder(BorderFactory.createLineBorder(new Color(255, 230, 237, 200), 2));
-            } else {
-                repeatButton.setBorder(null);
+        JLabel repeatButton = createPngButton("Repeat.png", 34 + 253, 401 + 46, null);
+        repeatButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                repeatEnabled = !repeatEnabled;
+                if (repeatEnabled) {
+                    repeatButton.setBorder(BorderFactory.createLineBorder(new Color(255, 230, 237, 200), 2));
+                } else {
+                    repeatButton.setBorder(null);
+                }
+                repeatButton.repaint();
             }
-            repeatButton.repaint();
         });
         contentPane.add(repeatButton);
 
@@ -567,21 +576,23 @@ public class MusicPlayerGUI extends JFrame {
             if (c == loadButton) {
                 contentPane.setComponentZOrder(c, 0);  // bottom
             } else if (c == horizontalBar) {
-                contentPane.setComponentZOrder(c, 1);  // behind verticalBar
-            } else if (c == verticalBar) {
-                contentPane.setComponentZOrder(c, 2);  // on top of horizontalBar
+                contentPane.setComponentZOrder(c, 1);
             } else if (c == titleBar) {
-                contentPane.setComponentZOrder(c, 3);
+                contentPane.setComponentZOrder(c, 2);
             } else if (c == songBar) {
-                contentPane.setComponentZOrder(c, 4);
+                contentPane.setComponentZOrder(c, 3);
             } else if (c == albumPanel) {
-                contentPane.setComponentZOrder(c, 5);
+                contentPane.setComponentZOrder(c, 4);
             } else if (c == songListBG) {
-                contentPane.setComponentZOrder(c, 6);
+                contentPane.setComponentZOrder(c, 5);
             } else if (c == musicBar) {
-                contentPane.setComponentZOrder(c, 7);  // behind buttons
+                contentPane.setComponentZOrder(c, 6);
+            } else if (c == songTitleLabel) {
+                contentPane.setComponentZOrder(c, 7);
+            } else if (c == verticalBar) {
+                contentPane.setComponentZOrder(c, 99);  // on top of EVERYTHING
             } else {
-                contentPane.setComponentZOrder(c, 8);  // buttons, slider, labels on top
+                contentPane.setComponentZOrder(c, 8);  // buttons, slider, labels
             }
         }
     }
@@ -639,25 +650,26 @@ public class MusicPlayerGUI extends JFrame {
     }
 
     /**
-     * Creates a JButton with a PNG icon.
+     * Creates a clickable icon using JLabel instead of JButton.
+     * JLabel has no hover/press/rollover states, so it won't flicker or appear translucent.
      */
-    private JButton createPngButton(String pngName, int x, int y, ActionListener action) {
+    private JLabel createPngButton(String pngName, int x, int y, Runnable action) {
         ImageIcon icon = loadPng(pngName);
-        JButton button = new JButton(icon);
+        JLabel label = new JLabel(icon);
         if (icon != null) {
-            button.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
+            label.setBounds(x, y, icon.getIconWidth(), icon.getIconHeight());
         } else {
-            button.setBounds(x, y, 24, 24);
+            label.setBounds(x, y, 24, 24);
         }
-        button.setBorder(null);
-        button.setContentAreaFilled(false);
-        button.setOpaque(false);
-        button.setRolloverEnabled(false);
-        button.setFocusPainted(false);
         if (action != null) {
-            button.addActionListener(action);
+            label.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    action.run();
+                }
+            });
         }
-        return button;
+        return label;
     }
 
     private void addGuiComponents() {
