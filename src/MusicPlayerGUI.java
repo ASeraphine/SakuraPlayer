@@ -48,27 +48,42 @@ public class MusicPlayerGUI extends JFrame {
     private boolean shuffleEnabled = false;
     private boolean repeatEnabled = false;
 
-    /** Loads a PNG image from the res/png/ directory (or res/ for icon-512.png) */
+    // Cache for loaded PNG icons — load once, reuse forever
+    private final java.util.HashMap<String, ImageIcon> iconCache = new java.util.HashMap<>();
+
+    /** Loads a PNG image from the res/png/ directory (or res/ for icon-512.png).
+     *  Results are cached so each icon is only loaded once. */
     private ImageIcon loadPng(String name) {
+        // Return cached icon if already loaded
+        ImageIcon cached = iconCache.get(name);
+        if (cached != null) {
+            return cached;
+        }
         try {
+            ImageIcon icon = null;
             // Try loading from classpath first (works when running from JAR)
             java.net.URL url = getClass().getResource("/png/" + name);
             if (url != null) {
                 BufferedImage img = ImageIO.read(url);
                 if (img != null) {
-                    return new ImageIcon(img);
+                    icon = new ImageIcon(img);
                 }
             }
             // Fallback: load from filesystem (works when running from VS Code / IDE)
-            File file = new File("res/png/" + name);
-            if (file.exists()) {
-                BufferedImage img = ImageIO.read(file);
-                if (img != null) {
-                    return new ImageIcon(img);
+            if (icon == null) {
+                File file = new File("res/png/" + name);
+                if (file.exists()) {
+                    BufferedImage img = ImageIO.read(file);
+                    if (img != null) {
+                        icon = new ImageIcon(img);
+                    }
                 }
             }
-            return null;
+            // Cache the result (even if null, to avoid retrying failed loads)
+            iconCache.put(name, icon);
+            return icon;
         } catch (Exception e) {
+            iconCache.put(name, null);
             return null;
         }
     }
